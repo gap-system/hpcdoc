@@ -1,0 +1,139 @@
+= Tasks
+
+Tasks provide mid- to high-level functionality for programmers
+to describe asynchronous workflows. A task is an asynchronously
+or synchronously executing job; functions exist to create tasks
+that are executed concurrently, on demand, or in the current
+thread; to wait for their completion, check their status, and
+retrieve any results.
+
+Here is a simple example of sorting a list in the background:
+
+| gap> task := RunTask(x -> SortedList(x), [3,2,1]);;
+| gap> WaitTask(task);
+| gap> TaskResult(task);
+| [ 1, 2, 3 ]
+
+{|RunTask|} dispatches a task to run in the background; a task
+is described by a function and zero or more arguments that are
+passed to {|RunTask|}. {|WaitTask|} waits for the task to complete;
+and {|TaskResult|} returns the result of the task.
+
+{|TaskResult|} does an implicit {|WaitTask|}, so the second line
+above can actually be omitted:
+
+| gap> task := RunTask(x -> SortedList(x), [3,2,1]);;
+| gap> TaskResult(task);
+| [ 1, 2, 3 ]
+
+It is simple to run two tasks in parallel. Let's compute the factorial
+of 10000 by splitting the work between two task:
+
+| gap> task1 := RunTask(Product, [1..5000]);;
+| gap> task2 := RunTask(Product, [5001..10000]);;
+| gap> TaskResult(task1) * TaskResult(task2) = Factorial(10000);
+| true
+
+You can use {|RunDelayedTask|} to delay executing the task until
+its result is actually needed.
+
+| gap> task1 := RunDelayedTask(Product, [1..5000]);;
+| gap> task2 := RunDelayedTask(Product, [5001..10000]);;
+| gap> WaitTask(task1, task2);
+| gap> TaskResult(task1) * TaskResult(task2) = Factorial(10000);
+| true
+
+Note that {|WaitTask|} is used here to start execution of both task;
+otherwise, {|task2|} would not be started until {|TaskResult(task1)|}
+has been evaluated.
+
+To start execution of a delayed task, you can also use {|ExecuteTask|}.
+This has no effect if a task has already been executing.
+
+For convenience, you can also use {|ImmediateTask|} to execute a task
+in the current thread:
+
+| gap> task := ImmediateTask(x -> SortedList(x), [3,2,1]);;
+| gap> TaskResult(task);
+| [ 1, 2, 3 ]
+
+This is indistinguishable from calling the function directly, but
+provides the same interface as normal tasks.
+
+Sometimes it can be useful to ignore the result of a task. The
+{|RunDetachedTask|} provides the necessary functionality.
+
+| gap> RunDetachedTask(function() Print("Hello, world!\n"); end);
+| Hello, world!
+
+Such a task cannot be waited for and its result (if any) is ignored.
+
+Task arguments are generally copied so that both the task that created
+them and the task that uses them can access the data concurrently
+without fear of race conditions. To avoid copying, arguments should be
+made shared or public (see the relevant parts of regions {^^regions^^};
+shared and public arguments will not be copied.
+
+==| RunTask(func [, arg1, ..., argn])
+==| RunDelayedTask(func [, arg1, ..., argn])
+==| RunDetachedTask(func [, arg1, ..., argn])
+==| DetachTask(task)
+==| ImmediateTask(func [, arg1, ..., argn])
+==| ExecuteTask(func [, arg1, ..., argn])
+
+==| WaitTask(task1, ..., taskn)
+==| WaitTasks(task1, ..., taskn)
+
+{|WaitTasks|} is an alias for {|WaitTask|}.
+
+==| WaitAnyTask(task1, ..., taskn)
+
+The {|WaitAnyTask|} function waits for any of its arguments to finish,
+then returns the number of that task.
+
+| gap> task1 := RunDelayedTask(x->SortedList(x), [3,2,1]);;
+| gap> task2 := RunDelayedTask(x->SortedList(x), [6,5,4]);;
+| gap> which := WaitAnyTask(task1, task2);
+| 2
+| gap> if which = 1 then
+| >      Display(TaskResult(task1);Display(TaskResult(task2);
+| >    else
+| >      Display(TaskResult(task2);Display(TaskResult(task1);
+| >    fi;
+| [ 4, 5, 6 ]
+| [ 1, 2, 3 ]
+
+One can pass a list of tasks to {|WaitAnyTask|} as an argument;
+{|WaitAnyTask([task1, ..., taskn])|} behaves identically to
+{|WaitAnyTask(task1, ..., taskn)|}.
+
+==| TaskResult(task)
+
+The {|TaskResult|} function returns the result of a task. It implicitly
+does a {|WaitTask(task)|} if that is necessary. Multiple invocations of
+{|TaskResult|} with the same task argument will not do repeated waits
+and always return the same value.
+
+==| RunningTasks()
+
+This function returns the number of currently running tasks. Note that
+it is only an approximation and can change as new tasks are being
+started in other threads.
+
+==| TaskStarted(task)
+
+This function returns true if the task has started executing (i.e., for
+any non-delayed task), false otherwise.
+
+==| TaskFinished(task)
+
+This function returns true if the task has finished executing and its
+result is available, false otherwise.
+
+==| TaskDetached(task)
+
+This function returns true if the task is detached, true otherwise.
+
+==| CullIdleTasks()
+
+This function terminates unused worker threads.

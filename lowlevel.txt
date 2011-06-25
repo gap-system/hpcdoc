@@ -1,0 +1,155 @@
+= Low-level functionality
+
+The functionality described in this section should only be used
+by experts, and even by those only with caution (especially the
+parts that relate to the memory model).
+
+Not only is it possible to crash or hang the GAP kernel, it can happen
+in ways that are very difficult to reproduce, leading to software
+defects that are discovered only long after deployment of a package and
+then become difficult to correct.
+
+The performance benefit of using these primitives is generally
+minimal; while concurrency can induce some overhead, the benefit
+from micromanaging concurrency in an interpreted language such
+as GAP is generally minimal.
+
+The low-level primitives exist primarily for the benefit of kernel
+programmers; it allows them to prototype new kernel functionality in GAP
+before implementing it in C.
+
+== Explicit lock and unlock primitives
+
+The {|LOCK|} operation combined with {|UNLOCK|} is a low-level interface
+for the functionality of the {^atomic^} statement.
+
+===| LOCK([obj_1, flag_1, ..., obj_n [, flag_n]])
+
+{|LOCK|} takes zero or more pairs of parameters, each comprising an
+object {-obj_i-} to be locked and a flag {-flag_i-} that denotes whether
+a read lock (false) or write lock (true) is required. The last flag is
+optional and defaults to true.
+
+Locks are managed internally as a stack of locked regions; {|LOCK|}
+returns an integer indicating a pointer to the top of the stack; this
+integer is used later by the {|UNLOCK|} operation to unlock locks on the
+stack up to that position.
+
+Calling {|LOCK()|} with no parameters returns the current lock stack
+pointer.
+
+===| UNLOCK(stackpos)
+
+{|UNLOCK|} unlocks all regions on the stack at {-stackpos-} or higher
+and sets the stack pointer to {-stackpos-}.
+
+| gap> l1 := ShareObj([1,2,3]);;
+| gap> l2 := ShareObj([4,5,6]);;
+| gap> p := LOCK(l1);
+| 0
+| gap> LOCK(l2);
+| 1
+| gap> UNLOCK(p); # unlock both RegionOf(l1) and RegionOf(l2)
+| gap> LOCK(); # current stack pointer
+| 0
+
+
+== Hash locks
+
+HPC-GAP supports {/hash locks/}; internally, the kernel maintains
+a fixed size array of locks; objects are mapped to a lock via hash
+function. The hash function is based on the object reference, not its
+contents (except for short integers and finite field elements).
+
+| gap> l := [ 1, 2, 3];;
+| gap> HASH_LOCK(l);   # lock 'l'
+| gap> f(l);           # do something with 'l'
+| gap> HASH_UNLOCK(l); # unlock 'l'
+
+Hash locks should only be used for very short operations, since there
+is a chance that two concurrently locked objects map to the same hash
+value, leading to unnecessary contention.
+
+Hash locks are unrelated to the locks used by the {|atomic|} statements
+and the {|LOCK|} and {|UNLOCK|} primitives.
+
+===| HASH_LOCK(obj)
+
+{|HASH_LOCK|} obtains the read-write lock for the hash value associated
+with {-obj-}.
+
+===| HASH_UNLOCK(obj)
+
+{|HASH_UNLOCK|} releases the read-write lock for the hash value
+associated with {-obj-}.
+
+===| HASH_LOCK_SHARED(obj)
+
+{|HASH_LOCK_SHARED|} obtains the read-only lock for the hash value associated
+with {-obj-}.
+
+===| HASH_UNLOCK_SHARED(obj)
+
+{|HASH_UNLOCK_SHARED|} releases the read-only lock for the hash value
+associated with {-obj-}.
+
+== Migration to the public region
+
+HPC-GAP allows migration of arbitrary objects to the public region.
+This functionality is potentially dangerous; for example, if two
+threads try resize a plain list simultaneously, this can result in
+memory corruption.
+
+Accordingly, such data should never be accessed except through
+operations that protect accesses through locks, memory barriers,
+or other mechanisms.
+
+= MAKE_PUBLIC(obj)
+
+{|MAKE_PUBLIC|} makes {-obj-} and all its subobjects members of
+the public region.
+
+= MAKE_PUBLIC_NORECURSE(obj)
+
+{|MAKE_PUBLIC_NORECURSE|} makes {-obj-}, but not any of its subobjects
+members of the public region.
+
+
+== Memory barriers
+
+The memory models of some processors do no guarantee that read
+and writes reflect accesses to main memory in the same order in
+which the processor performed them; for example, code may write
+variable v1 first, and v2 second; but the cache line containing
+v2 is flushed to main memory first so that other processors see
+the change to v2 before the change to v1.
+
+Memory barriers can be used to prevent such counter-intuitive
+reordering of memory accesses.
+
+===| ORDERED_WRITE(expr)
+
+The {|ORDERED_WRITE|} function guarantees that all writes that occur
+prior to its execution or during the evaluation of {-expr-} become
+visible to other processors before any of the code executed after.
+
+Example:
+
+| gap> f := function() y := 1; return 2; end;;
+| gap> x := ORDERED_WRITE(f());
+
+Here, the write barrier ensure that the assignment to {|y|} that
+occurs during the call of {|f()|} becomes visible to other
+processors before or at the same time as the assignmnt to {|x|}.
+
+This can also be done differently, with the same semantics:
+
+| gap> t := f();; # temporary variable
+| gap> ORDERED_WRITE(0); # dummy argument
+| gap> x := t;
+
+===| ORDERED_READ(expr)
+
+Conversely, the {|ORDERED_READ|} function ensures that reads that
+occur before its call or during the evaluation of {-expr-} are not
+reordered with respects to memory reads occurring after it.

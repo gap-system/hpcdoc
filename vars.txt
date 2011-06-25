@@ -1,0 +1,55 @@
+= Variables in HPC-GAP
+
+Variables with global scope are treated specifically in HPC-GAP.
+
+== Global variables
+
+Global variables in HPC-GAP an be accessed by all threads concurrently
+without explicit synchronization. Concurrent access is safe, but it is
+not deterministic. If multiple threads attempt to modify the same global
+variable simultaneously, the resulting value of the variable is random;
+it will be one of the values assigned by a thread, but it is impossible
+to predict with certainty which specific one will be assigned.
+
+== Thread-local variables
+
+HPC-GAP supports the notion of thread-local variables.
+Thread-local variables are (after being declared as such)
+accessed and modified like thread-local variables. However, unlike
+global variables, each thread can assign a distinct value to a thread-local
+variable.
+
+| gap> MakeThreadLocal("x");
+| gap> x := 1;
+| gap> WaitTask(RunTask(function() x := 2; end));
+| gap> x;
+
+As can be seen here, the assignment to {|x|} in a separate thread
+does not overwrite the value of {|x|} in the main thread.
+
+==| MakeThreadLocal(name)
+
+{|MakeThreadLocal|} makes the variable described by the string {-name-}
+a thread-local variable. It does not give it an initial value; either
+explicit per-thread assignment or a call to {^BindThreadLocal^} or
+{^BindThreadLocalConstructor^} to provide a default value is necessary.
+
+==| BindThreadLocal(name, obj)
+
+{|BindThreadLocal|} gives the thread-local variable described by the
+string {-name-} the default value {-obj-}. The first time the thread-local
+variable is accessed in a thread thereafter, it will yield {-obj-} as its
+value if it hasn't been assigned a specific value yet.
+
+==| BindThreadLocalConstructor(name, func)
+
+{|BindThreadLocal|} gives the thread-local variable described by the string
+{-name-} the constructor {-func-}. The first time the thread-local variable is
+accessed in a thread thereafter, it will yield {|func()|} as its value if it
+hasn't been assigned a specific value yet.
+
+==| ThreadVar
+
+All thread-local variables are stored in the thread-local record
+{|ThreadVar|}. Thus, if {|x|} is a thread-local variable, using
+{|ThreadVar.x|} is the same as using {|x|}.

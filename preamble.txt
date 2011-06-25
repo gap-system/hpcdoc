@@ -1,0 +1,2 @@
+!title HPC-GAP Reference Manual
+!author Reimer Behrends

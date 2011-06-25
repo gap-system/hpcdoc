@@ -1,0 +1,305 @@
+=[regions] How HPC-GAP organizes shared memory: Regions
+
+HPC-GAP allows multiple threads to access data shared between them;
+to avoid common concurrency errors, such as race conditions, it
+partitions GAP objects into regions. Access to regions is regulated
+so that no two threads can modify objects in the same region at the
+same time and so that objects that are being read by one thread cannot
+concurrently be modified by another.
+
+== Thread-local regions
+
+Each thread has an associated thread-local region. When a thread
+implicitly or explicitly creates a new object, that object initially
+belongs to the thread's thread-local region.
+
+Only the thread can read or modify objects in its thread-local region.
+For other threads to access an object, that object has to be migrated
+through a different region first.
+
+== Shared regions
+
+Shared regions are explicitly created through the {^ShareObj^} and
+{^ShareSingleObj^} primitives (see below). Multiple threads can access them
+concurrently, but accessing them requires that a thread uses an {|atomic|}
+statement to acquire a read or write lock beforehand.
+
+See the section on {|atomic|} statements ({^^atomic^^}) for details.
+
+== The public region
+
+A special public region contains objects that only permit atomic
+operations. These include, in particular, all immutable objects
+(immutable in the sense that their in-memory representation cannot
+change).
+
+All threads can access objects in the public region at all times without
+needing to acquire a read- or write-lock beforehand.
+
+== The read-only region
+
+The read-only region is another special region that contains objects
+that are only meant to be read; attempting to modify an object in that
+region will result in a runtime error. To obtain a modifiable copy
+of such an object, the {^CopyRegion^} primitive can be used.
+
+== Migrating objects between regions
+
+Objects can be migrated between regions using a number of functions.
+In order to migrate an object, the current thread must have exclusive
+access to that object; the object must be in its thread-local region
+or it must be in a shared region for which the current thread holds
+a write lock.
+
+The {^ShareObj^} and {^ShareSingleObj^} functions create a new
+shared region and migrate their respective argument to that region;
+{|ShareObj|} will also migrate all subobjects that are within the
+same region, while {|ShareSingleObj|} will leave the subobjects
+unaffected.
+
+The {^MigrateObj^} and {^MigrateSingleObj^} functions migrate objects
+to an existing region. The first argument of either function is the
+object to be migrated; the second is either a region (as returned by
+the {^RegionOf^} function) or an object whose containing region the
+first argument is to be migrated to.
+
+The current thread needs exclusive access to the target region (denoted
+by the second argument) for the operation to succeed. If successful, the
+first argument will be in the same region as the second argument afterwards.
+In the case of {|MigrateObj|}, all subobjects within the same region as
+the first argument will also be migrated to the target region.
+
+Finally, {^AdoptObj^} and {^AdoptSingleObj^} are special cases of
+{|MigrateObj|} and {|MigrateSingleObj|}, where the target region is
+the thread-local region of the current thread.
+
+To migrate objects to the thread-only region, one can use {^MakeReadOnly^}
+and {^MakeReadOnlyObj^}. The first migrates its argument and all its
+subjobjects that are within the same region to the read-only region; the
+second migrates only the argument itself, but not its subobjects.
+
+It is generally not possible to migrate objects explicitly to the public
+region; only objects with purely atomic operations can be made public
+and that is done automatically when they are created.
+
+The exception are immutable objects. When {|MakeImmutable|} is used, its
+argument is automatically moved to the public region.
+
+| gap> RegionOf(MakeImmutable([1,2,3]));
+| <public region>
+
+== Runtime errors
+
+If either GAP code or a kernel primitive attempts to access an object that
+it is not allowed to access according to these semantics, either a
+"write guard error" (for a failed write access) or a "read guard error"
+(for a failed read access) will be raised.
+
+== Functions relating to regions
+
+===| RegionOf(obj)
+
+| gap> RegionOf(1/2);
+| <public region>
+| gap> RegionOf([1,2,3]);
+| <region 0x5e2aa0>
+| gap> RegionOf(ShareObj([1,2,3]));
+| <region 0x45deaa0>
+
+Note that the unique number that each region is identified with is
+system-specific and can change each time the code is being run.
+
+Region objects returned by {|RegionOf|} can be compared:
+
+| gap> RegionOf([1,2,3]) = RegionOf([4,5,6]);
+| true
+
+The result in this example is true because both lists are in the same
+thread-local region.
+
+===| ShareObj(obj)
+
+The {|ShareObj|} function creates a new shared region and migrates
+the object and all its subobjects to that region.
+
+===| ShareSingleObj(obj)
+
+The {|ShareSingleObj|} function creates a new shared region and migrates
+the object, but not its subobjects, to that region.
+
+| gap> m := [ [1, 2], [3, 4] ];;
+| gap> ShareSingleObj(m);;
+| gap> atomic readonly m do
+| >      Display([ IsShared(m), IsShared(m[1]), IsShared(m[2]) ]);
+| >    od;
+| [ true, false, false ]
+
+===| MigrateObj(obj, target)
+
+The {|MigrateObj|} function migrates {-obj-} (and all subobjects
+contained within the same region) to the region denoted by the
+{-target-} argument. Here, {-target-} can either be a region object
+returned by {|RegionOf|} or a normal gap object. If {-target-} is a
+normal gap object, {-obj-} will be migrated to the region containing
+{-target-}.
+
+For the operation to succeed, the current thread must have exclusive
+access to the target region.
+
+===| MigrateSingleObj(obj, target)
+
+The {|MigrateSingleObj|} function works like {^MigrateObj^}, except that it
+does not migrate the subobjects of {-obj-}.
+
+===| AdoptObj(obj)
+
+The {|AdoptObj|} function migrates {-obj-} (and all its subobjects
+contained within the same region) to the thread's current region.
+
+| gap> l := ShareObj([1,2,3]);;
+| gap> IsThreadLocal(l);
+| false
+| gap> AdoptObj(l);
+| [ 1, 2, 3 ]
+| gap> IsThreadLocal(l);
+| true
+
+===| AdoptSingleObj(obj)
+
+The {|AdoptSingleObj|} function works like {^AdoptObj^}, except that
+it does not migrate the subobjects of {-obj-}.
+
+===| CopyRegion(obj)
+
+The {|CopyRegion|} function performs a structural copy of {-obj-}.
+The resulting objects will be located in the current thread's thread-local
+region. The function returns the copy as its result.
+
+| gap> l := MakeReadOnly([1,2,3]);
+| [ 1, 2, 3 ];
+| gap> l2 := CopyRegion(l);
+| [ 1, 2, 3 ];
+| gap> RegionOf(l) = RegionOf(l2);
+| false
+| gap> IsIdenticalObj(l, l2);
+| false
+| gap> l = l2;
+| true
+
+===| IsPublic(obj)
+
+The {|IsPublic|} function returns true if its argument is an object
+in the public region, false otherwise.
+
+| gap> IsPublic(1/2);
+| true
+| gap> IsPublic([1,2,3]);
+| false
+| gap> IsPublic(ShareObj([1,2,3]));
+| false
+| gap> IsPublic(MakeImmutable([1,2,3]));
+| true
+
+===| IsThreadLocal(obj)
+
+The {|IsThreadLocal|} function returns true if its argument is an
+object in the current thread's thread-local region, false otherwise.
+
+| gap> IsThreadLocal([1,2,3]);
+| true
+| gap> IsThreadLocal(ShareObj([1,2,3]));
+| false
+| gap> IsThreadLocal(1/2);
+| false
+| gap> RegionOf(1/2);
+| <public region>
+
+===| IsShared(obj)
+
+The {|IsShared|} function returns true if its argument is an object
+in a shared region. Note that if the current thread does not hold a
+lock on that shared region, another thread can migrate {-obj-} to a
+different region before the result is being evaluated; this can lead
+to race conditions. The function is intended primarily for debugging,
+not to build actual program logic around.
+
+===| HaveReadAccess(obj)
+
+The {|HaveReadAccess|} function returns true if the current thread
+has read access to {-obj-}.
+
+| gap> HaveReadAccess([1,2,3]);
+| true
+| gap> l := ShareObj([1,2,3]);;
+| gap> HaveReadAccess(l);
+| false;
+| gap> atomic readonly l do t := HaveReadAccess(l); od;; l;
+| true;
+
+===| HaveWriteAccess(obj)
+
+The {|HaveWriteAccess|} function returns true if the current thread
+has write access to {-obj-}.
+
+| gap> HaveWriteAccess([1,2,3]);
+| true
+| gap> l := ShareObj([1,2,3]);;
+| gap> HaveWriteAccess(l);
+| false;
+| gap> atomic readwrite l do t := HaveWriteAccess(l); od;; l;
+| true;
+
+===| MakeReadOnly(obj)
+
+The {|MakeReadOnly|} function migrates {-obj-} and all its subobjects
+that are within the same region as {-obj-} to the read-only region. It
+returns {-obj-}.
+
+===| MakeReadOnlyObj(obj)
+
+The {|MakeReadOnlyObj|} function migrates {-obj-}, but not any of its
+subobjects, to the read-only region. It returns {-obj-}.
+
+===| IsReadOnly(obj)
+
+The {|IsReadOnly|} function returns true if {-obj-} is in the read-only
+region, false otherwise.
+
+| gap> IsReadOnly([1,2,3]);
+| false
+| gap> IsReadOnly(MakeImmutable([1,2,3]));
+| false
+| gap> IsReadOnly(MakeReadOnly([1,2,3]));
+| true
+
+
+===[atomic] The {!atomic!} statement.
+
+The {|atomic|} statement ensures exclusive or read-only access to one
+or more shared regions for statements within its scope. It has the
+following syntax:
+
+| atomic ([readwrite|readonly] expr (, expr)* )* do
+|   statements
+| od;
+
+Each expression is evaluated and the region containing the resulting
+object is locked with either a read-write or read-only lock, depending
+on the keyword preceding the expression.
+
+Examples:
+
+| gap> l := ShareObj([1,2,3]);;
+| gap> atomic readwrite l do l[3] := 4; od;
+| gap> atomic readonly l do Display(l) od;
+| [ 1, 2, 4 ]
+
+| gap> l := ShareObj([1,2,3,4,5]);;
+| gap> l2 := ShareObj([6,7,8]);;
+| gap> atomic readwrite l readonly l2 do
+| >      for i in [1..3] do l[i] := l2[i];
+| >      l3 := AdoptObj(l);
+| >    od;
+| gap> l3;
+| [ 6, 7, 8, 4, 5 ]
+

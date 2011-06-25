@@ -1,0 +1,38 @@
+= Thread functions
+
+HPC GAP has low-level functionality to support explicit creation
+of threads. In practice, programmers should use higher-level
+functionality, such as tasks, to describe concurrency. The thread
+functions described here exist to facilitate the construction of
+higher level libraries and are not meant to be used directly.
+
+==| CreateThread(func [, arg1, ..., argn])
+
+New threads are created with the function {|CreateThread|}. The
+thread takes at least one function as its argument that it will
+call in the newly created thread; it also accepts zero or more
+parameters that will be passed to that function.
+
+The function returns a positive integer that is the identifier
+of the thread (thread ID).
+
+Only a finite number of threads can be active at a time (that
+limit is system-dependent). To reclaim the resources occupied
+by one thread, use the {^WaitThread^} function.
+
+==| WaitThread(threadID)
+
+The {|WaitThread|} function waits for the thread identified by
+{-threadID-} to finish; it does not return any value. When it returns,
+it returns all resources occupied by the thread it waited for, such as
+thread-local memory and operating system structures, to the system.
+
+==| CurrentThread()
+
+The {|CurrentThread|} function returns the thread ID of the
+current thread. For the main thread, that thread ID is 0.
+
+| gap> CurrentThread();
+| 0
+| gap> CreateThread(function() Display(CurrentThread()));;
+| 1

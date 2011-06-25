@@ -1,0 +1,41 @@
+= Synchronization variables
+
+Synchronization variables (also often called dataflow variables
+in the literature) are variables that can be written only once;
+attempt to read the variable block until it has been written
+to.
+
+Synchronization variables are created with {^CreateSyncVar^},
+written with {^SyncWrite^} and read with {^SyncRead^}.
+
+| gap> sv := CreateSyncVar();;
+| gap> RunDetachedTask(function()
+| gap>   Sleep(10);
+| >      SyncWrite(sv, MakeImmutable([1, 2, 3]));
+| >    end);
+| gap> SyncRead(sv);
+| [ 1, 2, 3 ]
+
+==| CreateSyncVar()
+
+The function {|CreateSyncVar|} takes no arguments. It returns
+a new synchronization variable. There is no need to deallocate
+it; the garbage collector will free the memory and all related
+resources when it is no longer accessible.
+
+==| SyncWrite(syncvar, obj)
+
+{|SyncWrite|} attempts to assign the value {-obj-} to {-syncvar-}.
+If {-syncvar-} has been previously assigned a value, the call
+will fail with a runtime error; otherwise, {-obj-} will be assigned
+to {-syncvar-}.
+
+In order to make sure that the recipient can read the result, the
+{-obj-} argument should not be a thread-local object; it should be
+public, read-only, or shared.
+
+==| SyncRead(syncvar)
+
+{|SyncRead|} reads the value previously assigned to {-syncvar-} with
+{|SyncWrite|}. If no value has been assigned yet, it blocks. It returns
+the assigned value.
