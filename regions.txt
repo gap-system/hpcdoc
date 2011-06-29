@@ -15,7 +15,7 @@ belongs to the thread's thread-local region.
 
 Only the thread can read or modify objects in its thread-local region.
 For other threads to access an object, that object has to be migrated
-through a different region first.
+into a different region first.
 
 == Shared regions
 
@@ -73,7 +73,7 @@ Finally, {^AdoptObj^} and {^AdoptSingleObj^} are special cases of
 {|MigrateObj|} and {|MigrateSingleObj|}, where the target region is
 the thread-local region of the current thread.
 
-To migrate objects to the thread-only region, one can use {^MakeReadOnly^}
+To migrate objects to the read-only region, one can use {^MakeReadOnly^}
 and {^MakeReadOnlyObj^}. The first migrates its argument and all its
 subjobjects that are within the same region to the read-only region; the
 second migrates only the argument itself, but not its subobjects.

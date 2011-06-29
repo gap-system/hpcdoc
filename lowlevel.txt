@@ -12,9 +12,9 @@ then become difficult to correct.
 The performance benefit of using these primitives is generally
 minimal; while concurrency can induce some overhead, the benefit
 from micromanaging concurrency in an interpreted language such
-as GAP is generally minimal.
+as GAP is likely to be small.
 
-The low-level primitives exist primarily for the benefit of kernel
+These low-level primitives exist primarily for the benefit of kernel
 programmers; it allows them to prototype new kernel functionality in GAP
 before implementing it in C.
 

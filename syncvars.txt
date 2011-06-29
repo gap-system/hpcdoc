@@ -2,7 +2,7 @@
 
 Synchronization variables (also often called dataflow variables
 in the literature) are variables that can be written only once;
-attempt to read the variable block until it has been written
+attempts to read the variable block until it has been written
 to.
 
 Synchronization variables are created with {^CreateSyncVar^},

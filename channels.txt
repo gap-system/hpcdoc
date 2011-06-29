@@ -1,6 +1,7 @@
 ==| CreateChannel([capacity])
 
-CreateChannel() returns a FIFO communication channel to exchange information
+CreateChannel() returns a FIFO communication channel that can be used
+to exchange information
 between threads. Its optional argument is a capacity (positive integer). If
 insufficient resources are available to create a channel, it returns -1. If the
 capacity is not a positive integer, an error will be raised.
@@ -24,7 +25,7 @@ removed from the channel, e.g. using {^ReceiveChannel^}.
 
 {|SendChannel|} performs automatic region migration for thread-local
 objects. If {-obj-} is thread-local for the current thread, it will be
-migrated (along with all subjects contained in the same region) to the
+migrated (along with all subobjects contained in the same region) to the
 receiving thread's thread-local data space. In between sending and
 receiving, {-obj-} cannot be accessed by either thread.
 

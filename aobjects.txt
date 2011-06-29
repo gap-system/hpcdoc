@@ -1,10 +1,13 @@
+
 = Atomic objects
 
 HPC-GAP provides a number of atomic object types. These can be accessed
 by multiple threads concurrently without synchronization.
 
-Atomic lists are fixed-size lists; they can be assigned to and read like
-normal lists without requiring synchronizations.
+Atomic lists are fixed-size lists; they can be assigned to and read
+from like normal plain lists without requiring
+synchronizations. Unlike plain lists, however, their entries cannot
+be unbound.
 
 Atomic records are atomic versions of plain records. Unlike plain records,
 though, it is not possible to delete elements from an atomic record.
@@ -19,7 +22,7 @@ on a per-thread basis.
 
 Atomic lists are created using the {|AtomicList|} function. After creation,
 they can be used exactly like any other list, except that they cannot be
-resized. They can also be converted to normal plain lists using
+resized. Their contents can also be copied as normal plain lists using
 {|FromAtomicList|}.
 
 ===| AtomicList(list|count, obj)
@@ -62,12 +65,12 @@ deterministic.
 ==| COMPARE_AND_SWAP(atomic_list, index, old, new)
 
 {|COMPARE_AND_SWAP|} is an atomic operation. It atomically compares
-{|atomic_list[index]|} to {-old-} and replaces the value (in the same
-atomic step) with {-new-} if the comparison was successful. It returns
-true if the comparison was successful, false otherwise.
+{|atomic_list[index]|} to {-old-} and, if they are identical,  replaces the value (in the same
+atomic step) with {-new-}. It returns
+true if the replacement took place, false otherwise.
 
 The primary use of {|COMPARE_AND_SWAP|} is to implement certain concurrency
-primitives; most programmers will not find any use for it.
+primitives; most programmers will not need to use it.
 
 == Atomic records and component objects
 
