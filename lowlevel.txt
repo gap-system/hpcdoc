@@ -33,10 +33,17 @@ optional and defaults to true.
 Locks are managed internally as a stack of locked regions; {|LOCK|}
 returns an integer indicating a pointer to the top of the stack; this
 integer is used later by the {|UNLOCK|} operation to unlock locks on the
-stack up to that position.
+stack up to that position. If {|LOCK|} should fail for some reason, it
+will return {|fail|}.
 
 Calling {|LOCK()|} with no parameters returns the current lock stack
 pointer.
+
+===| TRYLOCK([obj_1, flag_1, ..., obj_n [, flag_n]])
+
+{|TRYLOCK|} works similarly to {|LOCK|}. If it cannot acquire all
+region locks, it returns {|fail|} and does not lock any regions.
+Otherwise, its semantics are identical to {|LOCK|}.
 
 ===| UNLOCK(stackpos)
 
