@@ -57,10 +57,11 @@ deterministic.
 | gap> FromAtomicList(al);
 | [ 10, 40, 30 ]
 
-==| ATOMIC_ADD(atomic_list, index, value)
+==| ATOMIC_ADDITION(atomic_list, index, value)
 
-{|ATOMIC_ADD|} is a low-level operation that atomically adds {-value-} to
-{|atomic_list[index]|}. 
+{|ATOMIC_ADDITION|} is a low-level operation that atomically adds {-value-} to
+{|atomic_list[index]|}. It returns the value of atomic_list[index] after the
+addition has been performed.
 
 ==| COMPARE_AND_SWAP(atomic_list, index, old, new)
 
