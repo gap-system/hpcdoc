@@ -14,12 +14,12 @@ Here is a simple example of sorting a list in the background:
 | gap> TaskResult(task);
 | [ 1, 2, 3 ]
 
-{|RunTask|} dispatches a task to run in the background; a task
+{^RunTask^} dispatches a task to run in the background; a task
 is described by a function and zero or more arguments that are
-passed to {|RunTask|}. {|WaitTask|} waits for the task to complete;
+passed to {^RunTask^}. {^WaitTask^} waits for the task to complete;
 and {|TaskResult|} returns the result of the task.
 
-{|TaskResult|} does an implicit {|WaitTask|}, so the second line
+{^TaskResult^} does an implicit {^WaitTask^}, so the second line
 above can actually be omitted:
 
 | gap> task := RunTask(x -> SortedList(x), [3,2,1]);;
@@ -34,7 +34,7 @@ of 10000 by splitting the work between two task:
 | gap> TaskResult(task1) * TaskResult(task2) = Factorial(10000);
 | true
 
-You can use {|RunDelayedTask|} to delay executing the task until
+You can use {^RunDelayedTask^} to delay executing the task until
 its result is actually needed.
 
 | gap> task1 := RunDelayedTask(Product, [1..5000]);;
@@ -43,15 +43,16 @@ its result is actually needed.
 | gap> TaskResult(task1) * TaskResult(task2) = Factorial(10000);
 | true
 
-Note that {|WaitTask|} is used here to start execution of both task;
+Note that {^WaitTask^} is used here to start execution of both task;
 otherwise, {|task2|} would not be started until {|TaskResult(task1)|}
 has been evaluated.
 
 To start execution of a delayed task, you can also use {|ExecuteTask|}.
 This has no effect if a task has already been executing.
 
-For convenience, you can also use {|ImmediateTask|} to execute a task
-in the current thread:
+For convenience, you can also use {^ImmediateTask^} to execute a task
+synchronously (i.e., the task is started immediately and the call does
+not return until the task has completed).
 
 | gap> task := ImmediateTask(x -> SortedList(x), [3,2,1]);;
 | gap> TaskResult(task);
@@ -71,17 +72,49 @@ Such a task cannot be waited for and its result (if any) is ignored.
 Task arguments are generally copied so that both the task that created
 them and the task that uses them can access the data concurrently
 without fear of race conditions. To avoid copying, arguments should be
-made shared or public (see the relevant parts of regions {^^regions^^};
+made shared or public (see the relevant parts of the section on {?regions?});
 shared and public arguments will not be copied.
 
 ==| RunTask(func [, arg1, ..., argn])
+
+{|RunTask|} prepares a task for execution and starts it. The task will
+call the function {-func-} with arguments {-arg1-} through {-argn-} (if
+provided). The return value of {-func-} is the result of the task.
+
+The {|RunTask|} call itself returns a task object that can be used by
+functions that expect a task argument.
+
 ==| RunDelayedTask(func [, arg1, ..., argn])
+
+{|RunDelayedTask|} works as {^RunTask^}, but its start is delayed until
+it is being waited for (including implicitly by calling {^TaskResult^}.
+
 ==| RunDetachedTask(func [, arg1, ..., argn])
+
+{|RunDetachedTask|} works as {^RunTask^}, except that its result will be
+ignored and it cannot be waited for.
+
 ==| DetachTask(task)
+
+{|DetachTask|} turns a normal task into a detached task that cannot be
+waited for and whose result will be ignored.
+
 ==| ImmediateTask(func [, arg1, ..., argn])
-==| ExecuteTask(func [, arg1, ..., argn])
+
+{|ImmediateTask|} executes the task specified by its arguments
+synchronously, usually within the current thread.
+
+==| ExecuteTask(task)
+
+{|ExecuteTask|} starts {-task-} if it is not already running. It has
+only an effect if its argument is a task returned by {^RunDelayedTask^};
+otherwise, it is a no-op.
 
 ==| WaitTask(task1, ..., taskn)
+
+{|WaitTask|} waits until {-task1-} through {-taskn-} have completed;
+after that, it returns.
+
 ==| WaitTasks(task1, ..., taskn)
 
 {|WaitTasks|} is an alias for {|WaitTask|}.

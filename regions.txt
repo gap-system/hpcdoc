@@ -285,14 +285,17 @@ following syntax:
 
 Each expression is evaluated and the region containing the resulting
 object is locked with either a read-write or read-only lock, depending
-on the keyword preceding the expression.
+on the keyword preceding the expression. If neither the {|readwrite|} nor
+the {|readonly|} keyword was provided, read-write locks are used by
+default.
 
 Examples:
 
 | gap> l := ShareObj([1,2,3]);;
-| gap> atomic readwrite l do l[3] := 4; od;
+| gap> atomic readwrite l do l[3] := 9; od;
+| gap> atomic l do l[2] := 4; od;
 | gap> atomic readonly l do Display(l) od;
-| [ 1, 2, 4 ]
+| [ 1, 4, 9 ]
 
 | gap> l := ShareObj([1,2,3,4,5]);;
 | gap> l2 := ShareObj([6,7,8]);;

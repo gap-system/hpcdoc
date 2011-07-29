@@ -111,12 +111,12 @@ Accordingly, such data should never be accessed except through
 operations that protect accesses through locks, memory barriers,
 or other mechanisms.
 
-= MAKE_PUBLIC(obj)
+===| MAKE_PUBLIC(obj)
 
 {|MAKE_PUBLIC|} makes {-obj-} and all its subobjects members of
 the public region.
 
-= MAKE_PUBLIC_NORECURSE(obj)
+===| MAKE_PUBLIC_NORECURSE(obj)
 
 {|MAKE_PUBLIC_NORECURSE|} makes {-obj-}, but not any of its subobjects
 members of the public region.

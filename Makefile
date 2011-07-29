@@ -8,3 +8,5 @@ gapdoc: $(SRC)
 	denote -gapdoc $(SRC) > hpcdoc.xml
 wiki:	$(SRC)
 	denote -wiki $(SRC) > hpcdoc.wiki
+cat:	$(SRC)
+	cat $(SRC) >all.txt
