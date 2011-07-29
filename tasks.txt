@@ -27,7 +27,7 @@ above can actually be omitted:
 | [ 1, 2, 3 ]
 
 It is simple to run two tasks in parallel. Let's compute the factorial
-of 10000 by splitting the work between two task:
+of 10000 by splitting the work between two tasks:
 
 | gap> task1 := RunTask(Product, [1..5000]);;
 | gap> task2 := RunTask(Product, [5001..10000]);;
@@ -87,7 +87,7 @@ functions that expect a task argument.
 ==| RunDelayedTask(func [, arg1, ..., argn])
 
 {|RunDelayedTask|} works as {^RunTask^}, but its start is delayed until
-it is being waited for (including implicitly by calling {^TaskResult^}.
+it is being waited for (including implicitly by calling {^TaskResult^}).
 
 ==| RunDetachedTask(func [, arg1, ..., argn])
 
