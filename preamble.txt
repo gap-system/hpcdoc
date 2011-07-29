@@ -1,2 +1,1 @@
-!title HPC-GAP Reference Manual
-!author Reimer Behrends
+!title HPC-GAP Shared Memory Concurrency Extensions
