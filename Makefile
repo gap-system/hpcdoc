@@ -1,12 +1,13 @@
 SRC=preamble.txt tasks.txt vars.txt regions.txt threads.txt channels.txt syncvars.txt lowlevel.txt
+DENOTE=bin/denote
 
-all: html gapdoc wiki
+all: html
 
 html: $(SRC)
-	denote -html $(SRC) > hpcdoc.html
+	$(DENOTE) -html $(SRC) > hpcdoc.html
 gapdoc: $(SRC)
-	denote -gapdoc $(SRC) > hpcdoc.xml
+	$(DENOTE) -gapdoc $(SRC) > hpcdoc.xml
 wiki:	$(SRC)
-	denote -wiki $(SRC) > hpcdoc.wiki
+	$(DENOTE) -wiki $(SRC) > hpcdoc.wiki
 cat:	$(SRC)
 	cat $(SRC) >all.txt

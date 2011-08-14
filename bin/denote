@@ -1,0 +1,248 @@
+#!/usr/bin/env ruby
+require "cgi"
+
+LINE_WIDTH = 72
+
+$HeaderNumber = []
+$Tags = { }
+$Output = []
+
+def inc_header(level)
+  if level > $HeaderNumber.size then
+    while level > $HeaderNumber.size do
+      $HeaderNumber << 1
+    end
+  elsif level == $HeaderNumber.size then
+    $HeaderNumber[-1] += 1
+  else
+    $HeaderNumber = $HeaderNumber[0...level]
+    $HeaderNumber[-1] += 1
+  end
+  return $HeaderNumber
+end
+
+def strip_tail(s, tail)
+  if s[-tail.size..-1] == tail then
+    s[0...-tail.size]
+  else
+    s
+  end
+end
+
+def quote_html(s)
+  CGI.escapeHTML(s)
+end
+
+def format_html_pattern(s)
+  case s
+  when /^\|/, /^!/, /^-/ then
+    "<tt>#{quote_html(strip_tail(s[1..-1], s[0..0]))}</tt>"
+  when /^\// then
+    "<em>#{quote_html(strip_tail(s[1..-1], "/"))}</em>"
+  when /^\*/ then
+    "<strong>#{quote_html(strip_tail(s[1..-1], "*"))}</strong>"
+  when /^\^\^/ then
+    tag = strip_tail(s[2..-1], "^^")
+    sect = $Tags[tag]
+    if sect then
+      "Section <a href=\"\#s#{sect.number}\">#{sect.number}</a>"
+    end
+  when /^\^/ then
+    tag = strip_tail(s[1..-1], "^")
+    sect = $Tags[tag]
+    if sect then
+      "<tt><a href=\"\#s#{sect.number}\">#{quote_html(tag)}</a></tt>"
+    end
+  when /^\?/ then
+    tag = strip_tail(s[1..-1], "?")
+    sect = $Tags[tag]
+    if sect then
+      "<a href=\"\#s#{sect.number}\">#{quote_html(tag)}</a>"
+    end
+  end
+end
+
+def process_block(block)
+  header = block.first
+  case header
+  when /^!([a-z]+)\s+(.*)/ then
+    Preamble[$1] = $2
+  when /^(=+)\|\s+([a-z0-9_]+)(.*)/i then
+    $Output << Header.new($1.size, $2+$3, $2)
+  when /^(=+)\s+(.*)/ then
+    $Output << Header.new($1.size, $2)
+  when /^(=+)\[(.*?)\]\s+(.*)/ then
+    $Output << Header.new($1.size, $3, $2)
+  when /^\| / then
+    $Output << Code.new(block.map{|line| line[2..-1]})
+  else
+    $Output << Paragraph.new(block.join(" "))
+  end
+end
+
+module Format
+  def wordwrap(text, col = LINE_WIDTH)
+    text.gsub(/(.{1,#{col}})( +|$\n?)|(.{1,#{col}})/,
+      "\\1\\3\n") 
+  end
+  def emit_raw(s)
+    print s
+  end
+  def emit_line(s)
+    puts s
+  end
+  def emit_wrapped(s)
+    emit_raw(wordwrap(s))
+  end
+  def format_html(s)
+    s.gsub(/\{.*?\}|.[^{]+/) do
+      | pattern |
+      if pattern[0] == ?{ then
+        format_html_pattern(pattern[1..-2])
+      else
+        quote_html(pattern)
+      end
+    end
+  end
+end
+
+class Preamble
+  @@attributes = { }
+
+  def self.attributes
+    return @@attributes
+  end
+
+  def self.[]=(attribute, value)
+    @@attributes[attribute] = value
+  end
+
+  def self.[](attribute)
+    return @@attributes[attribute]
+  end
+
+  def self.emit_html
+    puts '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+      "http://www.w3.org/TR/html4/strict.dtd">'
+
+    puts "<html>"
+    if @@attributes["title"] then
+      puts "<head><title>#{@@attributes["title"]}</title></head>"
+    end
+
+    puts "<body>"
+
+    if @@attributes["title"] then
+      puts "<h1>#{@@attributes["title"]}</h1>"
+      puts
+    end
+  end
+end
+
+class Postscript
+  def self.emit_html
+    puts "</body>"
+    puts "</html>"
+  end
+end
+
+class Header
+  include Format
+  attr_reader :text, :tag, :number
+  def initialize(level, text, tag = nil)
+    @level = level
+    @number = inc_header(level).join(".")
+    if not @number.index "." then
+      @number << "."
+    end
+    @text = text
+    if tag then
+      @tag = tag
+      $Tags[tag] = self
+    end
+  end
+  def emit_html
+    if @level == 1 then
+      if @number != "1." then
+        emit_line "<hr>"
+      end
+      emit_wrapped "<h2 id=\"s#{@number}\">#{@number} #{format_html(@text)}</h2>"
+    else
+      emit_wrapped "<h3 id=\"s#{@number}\">#{@number} #{format_html(@text)}</h3>"
+    end
+  end
+end
+
+class Paragraph
+  include Format
+  attr_reader :text
+  def initialize(text)
+    @text = text
+  end
+  def emit_html
+    emit_wrapped "<p>#{format_html(@text)}</p>"
+  end
+end
+
+class Code
+  include Format
+  attr_reader :text
+  def initialize(text)
+    @text = text
+  end
+  def emit_html
+    emit_line "<pre>"
+    text.each do
+      | line |
+      line.chomp!
+      emit_line quote_html(line)
+    end
+    emit_line "</pre>"
+  end
+end
+
+case ARGV.first
+when "-html"
+  ARGV.shift
+  Postscript.emit_html
+else
+  STDERR.puts "Mode #{ARGV.first} is not yet supported."
+end
+
+block = []
+
+ARGF.each_line do
+  | line |
+  line.chomp!
+  if line == "" then
+    if block.size > 0 then
+      process_block(block)
+      block = [ ]
+    end
+  elsif line =~ /^=/ then
+    if block.size > 0 then
+      process_block(block)
+      block = [ ]
+    end
+    process_block([line])
+  elsif line =~ /^!/ then
+    if block.size > 0 then
+      process_block(block)
+      block = [ ]
+    end
+    process_block([line])
+  else
+    block << line
+  end
+end
+if block.size > 0 then
+  process_block(block)
+end
+
+Preamble.emit_html
+
+$Output.each do
+  | element |
+  element.emit_html
+  puts
+end
