@@ -144,22 +144,29 @@ normal gap object, {-obj-} will be migrated to the region containing
 {-target-}.
 
 For the operation to succeed, the current thread must have exclusive
-access to the target region.
+access to the target region and the object being migrated.
 
 ===| MigrateSingleObj(obj, target)
 
 The {|MigrateSingleObj|} function works like {^MigrateObj^}, except that it
 does not migrate the subobjects of {-obj-}.
 
+===| LockAndMigrateObj(obj, target)
+
+The {|LockAndMigrateObj|} function works like {^MigrateObj^}, except that it
+will automatically try to acquire a lock for the region containing {-target-}
+if it does not have one already.
+
 ===| AdoptObj(obj)
 
 The {|AdoptObj|} function migrates {-obj-} (and all its subobjects
-contained within the same region) to the thread's current region.
+contained within the same region) to the thread's current region. It
+requires exclusive access to {-obj-}.
 
 | gap> l := ShareObj([1,2,3]);;
 | gap> IsThreadLocal(l);
 | false
-| gap> AdoptObj(l);
+| gap> atomic l do AdoptObj(l); od;
 | [ 1, 2, 3 ]
 | gap> IsThreadLocal(l);
 | true
@@ -168,6 +175,12 @@ contained within the same region) to the thread's current region.
 
 The {|AdoptSingleObj|} function works like {^AdoptObj^}, except that
 it does not migrate the subobjects of {-obj-}.
+
+===| LockAndAdoptObj(obj)
+
+The {|LockAndAdoptObj|} function works like {^AdoptObj^}, except that
+it will attempt acquire an exclusive lock for the region containing {-obj-}
+if it does not have one already.
 
 ===| CopyRegion(obj)
 
