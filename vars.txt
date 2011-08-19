@@ -29,10 +29,14 @@ does not overwrite the value of {|x|} in the main thread.
 
 ==| MakeThreadLocal(name)
 
-{|MakeThreadLocal|} makes the variable described by the string {-name-}
-a thread-local variable. It does not give it an initial value; either
+{|MakeThreadLocal|} makes the variable described by the string {-name-} a
+thread-local variable. It normally does not give it an initial value; either
 explicit per-thread assignment or a call to {^BindThreadLocal^} or
 {^BindThreadLocalConstructor^} to provide a default value is necessary.
+
+If a global variable with the same name exists and is bound at the time of
+the call, its value will be used as the default value as though
+{^BindThreadLocal^} had been called with that value as its second argument.
 
 ==| BindThreadLocal(name, obj)
 
