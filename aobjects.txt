@@ -2,11 +2,12 @@
 = Atomic objects
 
 HPC-GAP provides a number of atomic object types. These can be accessed
-by multiple threads concurrently without synchronization.
+by multiple threads concurrently without requiring explicit
+synchronization, but can have non-deterministic behavior for complex
+operations.
 
-Atomic lists are fixed-size lists; they can be assigned to and read
-from like normal plain lists without requiring
-synchronizations.
+Atomic lists are fixed-size lists; they can be assigned to and read from
+like normal plain lists.
 
 Atomic records are atomic versions of plain records. Unlike plain records,
 though, it is not possible to delete elements from an atomic record.
@@ -109,7 +110,7 @@ using {|Objectify|}.
 {|AtomicRecord|} is used to create a new atomic record. Its single
 optional argument is either a positive integer, denoting the intended
 capacity (i.e., number of elements to be held) of the record, in which
-case a new empty atomic record with that capacity will be created.
+case a new empty atomic record with that initial capacity will be created.
 Alternatively, the caller can provide a plain record with which to
 initially populate the atomic record.
 
@@ -120,6 +121,10 @@ initially populate the atomic record.
 | 5
 | gap> [ r.x, r.y ]
 | [ 2, 3 ]
+
+Any atomic record can later grow beyond its initial capacity. There is
+no limit to the number of elements it can hold other than available
+memory.
 
 ===| FromAtomicRecord(record)
 
