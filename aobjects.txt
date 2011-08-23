@@ -62,7 +62,7 @@ as {-atomic_list-} at the time of the call. Because other threads can
 write concurrently to that list, the result is not guaranteed to be
 deterministic.
 
-| gap> al := AtomicList([10, 20, 30]);
+| gap> al := AtomicList([10, 20, 30]);;
 | gap> WaitTask(RunTask(function() al[2] := 40; end));
 | gap> FromAtomicList(al);
 | [ 10, 40, 30 ]
@@ -73,12 +73,18 @@ deterministic.
 {|atomic_list[index]|}. It returns the value of atomic_list[index] after the
 addition has been performed.
 
+| gap> al := AtomicList([4,5,6]);;
+| gap> ATOMIC_ADDITION(al, 2, 7);
+| 12
+| gap> FromAtomicList(al);
+| [ 4, 12, 7 ]
+
 ==| COMPARE_AND_SWAP(atomic_list, index, old, new)
 
 {|COMPARE_AND_SWAP|} is an atomic operation. It atomically compares
-{|atomic_list[index]|} to {-old-} and, if they are identical,  replaces the value (in the same
-atomic step) with {-new-}. It returns
-true if the replacement took place, false otherwise.
+{|atomic_list[index]|} to {-old-} and, if they are identical,  replaces
+the value (in the same atomic step) with {-new-}. It returns true if the
+replacement took place, false otherwise.
 
 The primary use of {|COMPARE_AND_SWAP|} is to implement certain concurrency
 primitives; most programmers will not need to use it.
