@@ -20,8 +20,9 @@ on a per-thread basis.
 
 == Atomic lists
 
-Atomic lists are created using the {|AtomicList|} function. After creation,
-they can be used exactly like any other list, except that they cannot be
+Atomic lists are created using the {|AtomicList|} or {|FixedAtomicList|}
+functions. After creation, they can be used exactly like any other list,
+except that atomic lists created with {|FixedAtomicList|} cannot be
 resized. Their contents can also be read as normal plain lists using
 {|FromAtomicList|}.
 
@@ -35,6 +36,9 @@ resized. Their contents can also be read as normal plain lists using
 
 Because multiple threads can read and write the list concurrently without
 synchronization, the results of modifying the list may be non-deterministic.
+
+It is faster to write to fixed atomic lists than to a resizable atomic
+list.
 
 ===| AtomicList(list | count, obj)
 
@@ -55,6 +59,28 @@ each set to the value of {-obj-}.
 | gap> WaitTask(RunTask(function() al[3] := "beta"; end));
 | gap> al[3];
 | "beta"
+
+===| FixedAtomicList(list | count, obj)
+
+{|FixedAtomicList|} works like {^AtomicList^} except that the resulting
+list cannot be resized.
+
+===| MakeFixedAtomicList(list)
+
+{|MakeFixedAtomicList|} turns a resizable atomic list into a fixed
+atomic list.
+
+| gap> a := AtomicList([99]);
+| <atomic list of size 1>
+| gap> a[2] := 100;
+| 100
+| gap> MakeFixedAtomicList(a);
+| <fixed atomic list of size 2>
+| gap> a[3] := 101;
+| Error, Atomic List Element: <pos>=3 is an invalid index for <list>
+| not in any function at line 4 of *stdin*
+| you can replace value <pos> via 'return <pos>;'
+| brk>
 
 ===| FromAtomicList(atomic_list)
 
