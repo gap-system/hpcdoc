@@ -34,11 +34,11 @@ of 10000 by splitting the work between two tasks:
 | gap> TaskResult(task1) * TaskResult(task2) = Factorial(10000);
 | true
 
-You can use {^RunDelayedTask^} to delay executing the task until
+You can use {^DelayTask^} to delay executing the task until
 its result is actually needed.
 
-| gap> task1 := RunDelayedTask(Product, [1..5000]);;
-| gap> task2 := RunDelayedTask(Product, [5001..10000]);;
+| gap> task1 := DelayTask(Product, [1..5000]);;
+| gap> task2 := DelayTask(Product, [5001..10000]);;
 | gap> WaitTask(task1, task2);
 | gap> TaskResult(task1) * TaskResult(task2) = Factorial(10000);
 | true
@@ -84,9 +84,9 @@ provided). The return value of {-func-} is the result of the task.
 The {|RunTask|} call itself returns a task object that can be used by
 functions that expect a task argument.
 
-==| RunDelayedTask(func [, arg1, ..., argn])
+==| DelayTask(func [, arg1, ..., argn])
 
-{|RunDelayedTask|} works as {^RunTask^}, but its start is delayed until
+{|DelayTask|} works as {^RunTask^}, but its start is delayed until
 it is being waited for (including implicitly by calling {^TaskResult^}).
 
 ==| RunDetachedTask(func [, arg1, ..., argn])
@@ -107,7 +107,7 @@ synchronously, usually within the current thread.
 ==| ExecuteTask(task)
 
 {|ExecuteTask|} starts {-task-} if it is not already running. It has
-only an effect if its argument is a task returned by {^RunDelayedTask^};
+only an effect if its argument is a task returned by {^DelayTask^};
 otherwise, it is a no-op.
 
 ==| WaitTask(task1, ..., taskn)
@@ -124,8 +124,8 @@ after that, it returns.
 The {|WaitAnyTask|} function waits for any of its arguments to finish,
 then returns the number of that task.
 
-| gap> task1 := RunDelayedTask(x->SortedList(x), [3,2,1]);;
-| gap> task2 := RunDelayedTask(x->SortedList(x), [6,5,4]);;
+| gap> task1 := DelayTask(x->SortedList(x), [3,2,1]);;
+| gap> task2 := DelayTask(x->SortedList(x), [6,5,4]);;
 | gap> which := WaitAnyTask(task1, task2);
 | 2
 | gap> if which = 1 then
