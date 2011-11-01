@@ -1,0 +1,197 @@
+= Text User Interface
+
+HPC-GAP has a multi-threaded user interface to assist with the development
+and debugging of concurrent programs. This user interface is enabled by
+default; to disable it, and use the single-threaded interface, GAP has
+to be started with the {|-S|} option.
+
+== Text UI commands
+
+The shell user interface provides the user with the option to control
+threads by commands prefixed with an exclamation mark ("!"). Those
+commands are listed below.
+
+For ease of use, users only need to type as many letters of each
+commands so that it can be unambiguously selected. Thus, the shell
+will recognize {|!l|} as an abbreviation for {|!list|}.
+
+=== !shell [<name>]
+
+Starts a new shell thread and switches to it. Optionally, a name for the
+thread can be provided.
+
+| gap> !shell
+| --- Switching to thread 4
+| [4] gap> 
+
+
+=== !fork [<name>]
+
+Starts a new background shell thread. Optionally, a name for the thread
+can be provided.
+
+| gap> !fork
+| --- Created new thread 5
+
+=== !list
+
+List all current threads that are interacting with the user. This does
+not list threads created with {|CreateThread()|} that have not entered
+a break loop.
+
+| gap> !list
+| --- Thread 0 [0]
+| --- Thread 4 [4]
+| --- Thread 5 [5] (pending output)
+
+=== !name [<id>] <name>
+
+Give the thread with the numerical identifier or name {|<id>|} the name
+name.
+
+| gap> !name 5 test
+| gap> !list
+| --- Thread 0 [0]
+| --- Thread 4 [4]
+| --- Thread test [5] (pending output)
+
+=== !info <id>
+
+Provide information about the thread with the numerical identifier or
+name {|<id>|}. (/Not yet implemented./}
+
+=== !hide [<id>|*]
+
+Hide output from the thread with the numerical identifier or
+name {|<id>|} when it is not the foreground thread. If no thread is
+specified, make this the default behavior for future threads.
+
+=== !watch [<id>|*]
+
+Show output from the thread with the numerical identifier or
+name {|<id>|} even when it is not the foreground thread. If no thread is
+specified, make this the default behavior for future threads.
+
+=== !keep <num>
+
+Keep {|<num>|} lines of output from each thread.
+
+=== !prompt (<id>|*) <string>
+
+Set the prompt for the specified thread (or for all newly created
+threads if {|*|} was specified) to be {|<string>|}. If the string
+contains the pattern {|%id%|}, it is replaced with the numerical
+id of the thread; if it contains the pattern {|%name%|}, it is
+replaced with the name of the thread; if the thread has no name,
+the numerical id is displayed instead.
+
+=== !prefix (<id>|*) <string>
+
+Prefix the output from the specified thread (or for all newly
+created threads if {|*|} was specified) wiht {|<string>|}. The
+same substitution rules as for the {|!prompt|} command apply.
+
+=== !select <id>
+
+Make the specified thread the foreground thread.
+
+| gap> !select 4
+| gap> !select 4
+| --- Switching to thread 4
+| [4] gap> 
+
+=== !next
+
+Make the next thread in numerical order the foreground thread.
+
+=== !previous
+
+Make the previous thread in numerical order the foreground thread.
+
+=== !replay <num> [<id>]
+
+Display the last {|<num>|} lines of output of the specified thread.
+If no thread was specified, display the last {|<num>|} lines of the
+current foreground thread.
+
+=== !<id>
+
+{|!<id>|} is a shortcut for {|!select <id>|}.
+
+=== !source <file>
+
+Read commands from file {|<file>|}.
+
+=== !alias <shortcut> <expansion>
+
+Create an alias. After defining the alias, {|!<shortcut> <rest of
+line>|} will be replaced with {|!<expansion> <rest of line>|}.
+
+=== !unalias <shortcut>
+
+Removes the specified alias.
+
+=== !eval <gap code>
+
+Evaluates {|<gap code>|} as a command.
+
+=== !run <function> <string>
+
+Calls the function with name {|<function>|}, passing it the single
+argument {|<string>|} as a GAP string.
+
+== GAP functions to access the Shell UI
+
+There are several functions to access the basic functionality of the
+shell user interface. Other than {^TextUIRegisterCommand^}, they
+can only be called from within a registered command.
+
+Threads can be specified either by their numerical identifier or
+by their name (as a string). The empty string can be used to specify
+the current foreground thread.
+
+===| TextUIRegisterCommand(name, func)
+
+Registers the command {|!name|} with the shell UI. It will call <func>
+with the rest of the command line passed as a string argument when
+typed.
+
+===| TextUIForegroundThread()
+
+Returns the numerical identifier of the current foreground thread.
+
+===| TextUIForegroundThreadName()
+
+Returns the name of the current foreground thread or {|fail|} if the
+current foreground thread has no name.
+
+===| TextUISelectThread(id)
+
+Makes {-id-} the current foreground thread. Returns {|true|} or
+{|false|} to indicate success.
+
+===| TextUIOutputHistory(id, count)
+
+Returns the last {-count-} lines of the thread specified by {-id-}
+(which can be a numerical identifier or a name). Returns {|fail|} if
+there is no such thread.
+
+===| TextUISetOutputHistoryLength(length)
+
+By default, retain {-length-} lines of output history from each thread.
+
+===| TextUINewSession(foreground, name)
+
+Creates a new shell thread. Here, {-foreground-} is a boolean
+variable specifying whether it should be made the new foreground
+thread and {-name-} is the name of the thread. The empty string
+can be used to leave the thread without a name.
+
+===| TextUIRunCommand(command)
+
+Run the command denoted by {-command-} as though a user had typed it.
+The command must not contain a newline character.
+
+===| TextUIPrompt()
+
+Display a prompt for the current thread.
