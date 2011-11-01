@@ -88,6 +88,14 @@ argument is automatically moved to the public region.
 | gap> RegionOf(MakeImmutable([1,2,3]));
 | <public region>
 
+== Region names
+
+Regions can be given names, either explicitly via {^SetRegionName^} or
+when they are created via {^ShareObj^} and {^ShareSingleObj^}. Thread-local
+regions, the public, and the readonly region are given names by default.
+
+Multiple regions can have the same name.
+
 == Runtime errors
 
 If either GAP code or a kernel primitive attempts to access an object that
@@ -97,6 +105,15 @@ it is not allowed to access according to these semantics, either a
 
 == Functions relating to regions
 
+===| NewRegion([name])
+
+The function {|NewRegion|} creates a new shared region. If the optional
+argument {-name-} is provided, then the name of the new region will be
+set to {-name-}.
+
+| gap> NewRegion("example region");
+| <region: example region>
+
 ===| RegionOf(obj)
 
 | gap> RegionOf(1/2);
@@ -105,6 +122,10 @@ it is not allowed to access according to these semantics, either a
 | <region 0x5e2aa0>
 | gap> RegionOf(ShareObj([1,2,3]));
 | <region 0x45deaa0>
+| gap> RegionOf(ShareObj([1,2,3]));
+| <region 0x45deaa0>
+| gap> RegionOf(ShareObj([1,2,3], "test region"));
+| <region: test region>
 
 Note that the unique number that each region is identified with is
 system-specific and can change each time the code is being run.
@@ -117,15 +138,19 @@ Region objects returned by {|RegionOf|} can be compared:
 The result in this example is true because both lists are in the same
 thread-local region.
 
-===| ShareObj(obj)
+===| ShareObj(obj[, name])
 
 The {|ShareObj|} function creates a new shared region and migrates
-the object and all its subobjects to that region.
+the object and all its subobjects to that region. If the optional
+argument {-name-} is provided, then the name of the new region is
+set to {-name-}.
 
-===| ShareSingleObj(obj)
+===| ShareSingleObj(obj[, name])
 
 The {|ShareSingleObj|} function creates a new shared region and migrates
-the object, but not its subobjects, to that region.
+the object, but not its subobjects, to that region. If the optional
+argument {-name-} is provided, then the name of the new region is set to
+{-name-}.
 
 | gap> m := [ [1, 2], [3, 4] ];;
 | gap> ShareSingleObj(m);;
@@ -285,6 +310,20 @@ region, false otherwise.
 | gap> IsReadOnly(MakeReadOnly([1,2,3]));
 | true
 
+===| SetRegionName(obj, name)
+
+The {|SetRegionName|} function sets the name of the region of {-obj-} to
+{-name-}.
+
+===| ClearRegionName(obj
+
+The {|ClearRegionName|} function clears the name of the region of {-obj-} to
+{-name-}.
+
+===| RegionName(obj)
+
+The {|RegionName|} function returns the name of the region of {-obj-}.
+If that region does not have a name, {|fail|} will be returned.
 
 ===[atomic] The {!atomic!} statement.
 
