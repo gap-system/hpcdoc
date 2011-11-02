@@ -103,6 +103,10 @@ it is not allowed to access according to these semantics, either a
 "write guard error" (for a failed write access) or a "read guard error"
 (for a failed read access) will be raised.
 
+To inspect objects whose contents lie in other regions (and therefore
+cannot be displayed by {|PrintObj|} or {|ViewObj|}, the functions
+{^ViewShared^} and {^UNSAFE_VIEW^} can be used.
+
 == Functions relating to regions
 
 ===| NewRegion([name])
@@ -324,6 +328,28 @@ The {|ClearRegionName|} function clears the name of the region of {-obj-} to
 
 The {|RegionName|} function returns the name of the region of {-obj-}.
 If that region does not have a name, {|fail|} will be returned.
+
+===| ViewShared(obj)
+
+The {|ViewShared|} function allows the inspection of objects in
+shared regions. It will try to lock the region and then call
+{|ViewObj(obj)|}. If it cannot acquire a lock for the region, it
+will simply display the normal description of the object.
+
+===| UNSAFE_VIEW(obj)
+
+The {|UNSAFE_VIEW|} function allows the inspection of any object
+in the system, regardless of whether the current thread has access
+to the region containing it. It should be used with care: If the
+object inspected is being modified by another thread concurrently,
+the resulting behavior is undefined.
+
+Moreover, the function works by temporarily disabling read and
+write guards for regions, so other threads may corrupt memory
+rather than producing errors.
+
+It is generally safe to use if all threads but the current one
+are paused.
 
 ===[atomic] The {!atomic!} statement.
 
