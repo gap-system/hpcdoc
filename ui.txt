@@ -192,6 +192,6 @@ can be used to leave the thread without a name.
 Run the command denoted by {-command-} as though a user had typed it.
 The command must not contain a newline character.
 
-===| TextUIPrompt()
+===| TextUIWritePrompt()
 
 Display a prompt for the current thread.
