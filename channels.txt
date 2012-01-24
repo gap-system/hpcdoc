@@ -1,3 +1,7 @@
+= Channels
+
+Channels are FIFO queues that threads can use to coordinate their activities.
+
 ==| CreateChannel([capacity])
 
 CreateChannel() returns a FIFO communication channel that can be used
