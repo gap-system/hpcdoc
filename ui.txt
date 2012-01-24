@@ -44,6 +44,14 @@ a break loop.
 | --- Thread 4 [4]
 | --- Thread 5 [5] (pending output)
 
+=== !kill <id>
+
+Terminates the specified thread.
+
+=== !break <id>
+
+Makes the specified thread enter a break loop.
+
 === !name [<id>] <name>
 
 Give the thread with the numerical identifier or name {|<id>|} the name
