@@ -13,8 +13,7 @@ thread takes at least one function as its argument that it will
 call in the newly created thread; it also accepts zero or more
 parameters that will be passed to that function.
 
-The function returns a positive integer that is the identifier
-of the thread (thread ID).
+The function returns a thread object describing the thread.
 
 Only a finite number of threads can be active at a time (that
 limit is system-dependent). To reclaim the resources occupied
@@ -29,10 +28,69 @@ thread-local memory and operating system structures, to the system.
 
 ==| CurrentThread()
 
-The {|CurrentThread|} function returns the thread ID of the
-current thread. For the main thread, that thread ID is 0.
+The {|CurrentThread|} function returns the thread object for the
+current thread.
+
+==| ThreadID(thread)
+
+The {|ThreadID|} function returns a numeric thread id for the
+given thread. The thread id of the main thread is always 0.
 
 | gap> CurrentThread();
+| <thread #0: running>
+| gap> ThreadID(CurrentThread());
 | 0
-| gap> CreateThread(function() Display(CurrentThread()));;
-| 1
+
+==| KillThread(thread)
+
+The {|KillThread|} function terminates the given thread. Any region
+locks that the thread currently holds will be unlocked. The thread
+can be specified as a thread object or via its numeric id.
+
+The implementation for {|KillThread|} is dependent on
+the interpreter actually executing statements. Threads performing
+system calls, for example, will not be terminated until the system
+call returns. Similarly, long-running kernel functions will delay
+termination until the kernel function returns.
+
+Use of {|CALL_WITH_CATCH|} will not prevent a thread from being
+terminated. If you wish to make sure that catch handlers will be
+visited, use {^InterruptThread^} instead. {|KillThread|} should be
+used for threads that cannot be controlled anymore in any other way but
+still eat system resources.
+
+==| PauseThread(thread)
+
+The {|PauseThread|} function suspends execution for the given thread.
+The thread can be specified as a thread object or via its numeric id.
+
+The implementation for {|PauseThread()|} is dependent on
+the interpreter actually executing statements. Threads performing
+system calls, for example, will not pause until the system
+call returns. Similarly, long-running kernel functions will not
+pause until the kernel function returns.
+
+==| InterruptThread(thread, interrupt)
+
+The {|InterruptThread|} function calls an interrupt handler for the
+given thread. The thread can be specified as a thread object or via its
+numeric id. The interrupt is specified as an integer between 0 and 100.
+
+An interrupt number of zero (or an interrupt number for which no
+interrupt handler has been set up with {^SetInterruptHandler^} will
+cause the thread to enter a break loop. Otherwise, the respective
+interrupt handler that has been created with {^SetInterruptHandler^}
+will be called.
+
+The implementation for {|InterruptThread|} is dependent on the
+interpreter actually executing statements. Threads performing system
+calls, for example, will not call interrupt handlers until the system
+call returns. Similarly, long-running kernel functions will delay
+invocation of the interrupt handler until the kernel function returns.
+
+==| SetInterruptHandler(number, handler)
+
+The {|SetInterruptHandler|} function allows the programmer to set up
+interrupt handlers for the current thread. The number must be in the
+range from 1 to 100 (inclusive); the handler must be a parameterless
+function (or {|fail|} to remove a handler).

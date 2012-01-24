@@ -98,10 +98,11 @@ Multiple regions can have the same name.
 
 == Runtime errors
 
-If either GAP code or a kernel primitive attempts to access an object that
-it is not allowed to access according to these semantics, either a
+If either GAP code or a kernel primitive attempts to access an object
+that it is not allowed to access according to these semantics, either a
 "write guard error" (for a failed write access) or a "read guard error"
-(for a failed read access) will be raised.
+(for a failed read access) will be raised. The global variable
+{|LastInaccessible|} will contain the object that caused such an error.
 
 To inspect objects whose contents lie in other regions (and therefore
 cannot be displayed by {|PrintObj|} or {|ViewObj|}, the functions
