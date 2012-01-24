@@ -70,6 +70,16 @@ system calls, for example, will not pause until the system
 call returns. Similarly, long-running kernel functions will not
 pause until the kernel function returns.
 
+While a thread is paused, the thread that initiated the pause can
+access the paused thread's thread-local region.
+
+| gap> loop := function() while true do Sleep(1); od; end;
+| gap> x := fail;;
+| gap> th := CreateThread(function() x := [1, 2, 3]; loop(); end);;
+| gap> PauseThread(th);
+| gap> x;
+| [ 1, 2, 3 ]
+
 ==| InterruptThread(thread, interrupt)
 
 The {|InterruptThread|} function calls an interrupt handler for the
