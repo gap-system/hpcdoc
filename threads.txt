@@ -80,6 +80,14 @@ access the paused thread's thread-local region.
 | gap> x;
 | [ 1, 2, 3 ]
 
+==| ResumeThread(thread)
+
+The {|ResumeThread|} function resumes execution for the given thread
+that was paused with {|PauseThread|}. The thread can be specified as a
+thread object or via its numeric id.
+
+If the thread isn't paused, {|ResumeThread|} is a no-op.
+
 ==| InterruptThread(thread, interrupt)
 
 The {|InterruptThread|} function calls an interrupt handler for the
