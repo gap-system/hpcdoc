@@ -74,7 +74,8 @@ pause until the kernel function returns.
 
 The {|InterruptThread|} function calls an interrupt handler for the
 given thread. The thread can be specified as a thread object or via its
-numeric id. The interrupt is specified as an integer between 0 and 100.
+numeric id. The interrupt is specified as an integer between 0 and
+{^MAX_INTERRUPT^}.
 
 An interrupt number of zero (or an interrupt number for which no
 interrupt handler has been set up with {^SetInterruptHandler^} will
@@ -88,9 +89,25 @@ calls, for example, will not call interrupt handlers until the system
 call returns. Similarly, long-running kernel functions will delay
 invocation of the interrupt handler until the kernel function returns.
 
-==| SetInterruptHandler(number, handler)
+==| SetInterruptHandler(interrupt, handler)
 
 The {|SetInterruptHandler|} function allows the programmer to set up
-interrupt handlers for the current thread. The number must be in the
-range from 1 to 100 (inclusive); the handler must be a parameterless
-function (or {|fail|} to remove a handler).
+interrupt handlers for the current thread. The interrupt number must be
+in the range from 1 to {^MAX_INTERRUPT^} (inclusive); the handler must
+be a parameterless function (or {|fail|} to remove a handler).
+
+==| NewInterruptID()
+
+The {|NewInterruptID|} function returns a previously unused number
+(starting at 1). These numbers can be used to globally coordinate
+interrupt numbers.
+
+| gap> StopTaskInterrupt := NewInterruptID();
+| 1
+| gap> SetInterruptHandler(StopTaskInterrupt, StopTaskHandler);
+
+==| MAX_INTERRUPT
+
+The global variable {|MAX_INTERRUPT|} is an integer containing
+the maximum value for the interrupt arguments to {^InterruptThread^}
+and {^SetInterruptHandler^}.
