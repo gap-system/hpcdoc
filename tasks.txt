@@ -62,9 +62,9 @@ This is indistinguishable from calling the function directly, but
 provides the same interface as normal tasks.
 
 Sometimes it can be useful to ignore the result of a task. The
-{|RunDetachedTask|} provides the necessary functionality.
+{|RunAsyncTask|} provides the necessary functionality.
 
-| gap> RunDetachedTask(function() Print("Hello, world!\n"); end);
+| gap> RunAsyncTask(function() Print("Hello, world!\n"); end);
 | Hello, world!
 
 Such a task cannot be waited for and its result (if any) is ignored.
@@ -89,15 +89,15 @@ functions that expect a task argument.
 {|DelayTask|} works as {^RunTask^}, but its start is delayed until
 it is being waited for (including implicitly by calling {^TaskResult^}).
 
-==| RunDetachedTask(func [, arg1, ..., argn])
+==| RunAsyncTask(func [, arg1, ..., argn])
 
-{|RunDetachedTask|} works as {^RunTask^}, except that its result will be
-ignored and it cannot be waited for.
+{|RunAsyncTask|} creates an asynchronous task. It works as {^RunTask^},
+except that its result will be ignored and it cannot be waited for.
 
-==| DetachTask(task)
+==| MakeTaskAsync(task)
 
-{|DetachTask|} turns a normal task into a detached task that cannot be
-waited for and whose result will be ignored.
+{|MakeTaskAsync|} turns a synchronous task into an asynchronous task
+that cannot be waited for and whose result will be ignored.
 
 ==| ImmediateTask(func [, arg1, ..., argn])
 
@@ -163,9 +163,9 @@ any non-delayed task), false otherwise.
 This function returns true if the task has finished executing and its
 result is available, false otherwise.
 
-==| TaskDetached(task)
+==| TaskIsAsync(task)
 
-This function returns true if the task is detached, true otherwise.
+This function returns true if the task is asynchronous, true otherwise.
 
 ==| CullIdleTasks()
 

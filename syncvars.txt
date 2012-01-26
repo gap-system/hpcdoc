@@ -9,8 +9,8 @@ Synchronization variables are created with {^CreateSyncVar^},
 written with {^SyncWrite^} and read with {^SyncRead^}.
 
 | gap> sv := CreateSyncVar();;
-| gap> RunDetachedTask(function()
-| gap>   Sleep(10);
+| gap> RunAsyncTask(function()
+| >      Sleep(10);
 | >      SyncWrite(sv, MakeImmutable([1, 2, 3]));
 | >    end);
 | gap> SyncRead(sv);
