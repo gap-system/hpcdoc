@@ -1,0 +1,398 @@
+= ZeroMQ Bindings
+
+There are experimental bindings to the ZeroMQ library available
+(http://www.zeromq.net/). This section describes these bindings.
+
+Messages in ZeroMQ are sent between endpoints called {/sockets/}.
+Each socket can be {/bound/} to an address specified by a URI and other
+sockets can {/connect/} to the same address to exchange messages with
+that socket.
+
+== Addresses, transports, and URIs
+
+Addresses are specified as URIs of one of four different types (TCP,
+IPC, in-process, PGM/EPGM), each for a different type of transport.
+
+=== The TCP transport
+
+TCP URIs map to POSIX TCP stream sockets. The URI is of the form
+"tcp://<address>:<port>" or "tcp://*:<port>". Here, {|<address>|} is an
+internet address, either an IP address or a symbolic address (note that
+to resolve symbolic addresses, the library may have to consult DNS
+servers, which can take an indefinite amount of time or even fail). Port
+is a TCP port number. If a "*" is given instead of an address, this
+describes the so-called unspecified address; the URI can only be used
+for binding and will then accept incoming connections from all
+interfaces (as in binding to "0.0.0.0" in IPv4 or "::" in IPv6).
+
+=== The IPC transport
+
+The URI for IPC communication is of the form "ipc://<path>", where
+{|<path>|} is an actual path on the file system. Binding to
+such a URI will create a file in that location.
+
+| gap> ZmqBind(socket, "ipc:///tmp/connector");
+
+=== The in-process transport
+
+The in-process transport is used to communicate between threads in
+order to avoid the overhead of operating system calls. Messages
+are simply being copied from one thread's memory to the other's.
+
+In-process URIs are of the form "inproc://<string>", where {|<string>|}
+is an arbitrary string.
+
+== Creating and closing sockets
+
+Sockets are generally being created via calls to {^ZmqPushSocket^}, etc.
+Each such call takes two optional arguments, a URI and an identity.
+
+If a URI is given, a call to {^ZmqAttach^} will be performed immediately
+with the socket and URI. In particular, if the URI is prefixed with a
+"+" character, then the socket will connect to the address specified by
+the part after the "+ character; otherwise, it will be bound to the
+URI.
+
+| gap> z := ZmqPushSocket("inproc://test");  # binds to inproc://test
+| gap> z := ZmqPushSocket("+inproc://test"); # connects to inproc://test
+
+
+If an identity is also provided, the library will call
+{^ZmqSetIdentity^} to set the identity (name) for that socket.
+
+For a precise description of the behavior of each socket type, please
+consult the original ZeroMQ documentation for {|zmq_socket()|}.
+
+===| ZmqPushSocket([uri, [identity]])
+
+A push socket is one end of a unidirectional pipe. Programs can send
+messages to it, which will be delivered to a matched pull socket at
+the other end.
+
+===| ZmqPullSocket([uri, [identity]])
+
+A pull socket is the other end of a unidirectional pipe.
+
+===| ZmqReplySocket([uri, [identity]])
+
+A reply socket provides the server side of a remote-procedure call
+interaction. It alternates between receiving a message and sending
+a message to the socket from which the previous one originated.
+
+Deviating from that protocol (for example, by sending two messages in
+succession or receiving two without responding to the first) will
+result in an error.
+
+===| ZmqRequestSocket([uri, [identity]])
+
+A request socket provides the client side of a remote-procedure call
+interaction. It will alternate between sending a message to a connected
+reply socket and receiving the response.
+
+===| ZmqPublisherSocket([uri, [identity]])
+
+A publisher socket is a unidirectional broadcast facility. It will send
+each outgoing message to all connected subscriber sockets.
+
+===| ZmqSubscriberSocket([uri, [identity]])
+
+A subscriber socket receives messages from a publisher socket. It can
+subscribe to only a specific subseet of messages (see the
+{^ZmqSubscribe^} function) or receive all of them.
+
+===| ZmqDealerSocket([uri, [identity]])
+
+A dealer socket is a bidirectional socket. One or more peers can connect
+to it. Outgoing messages will be sent to those peers in a round-robin
+fashion (i.e., the first message goes to the first peer, the second to
+the second peer, and so forth until all peers have received a message
+and the process begins anew with the first peer). Incoming messages
+will be received from all peers and processed fairly (i.e., no message
+will be held indefinitely).
+
+Two dealer sockets can be used to create a bidirectional pipe.
+
+===| ZmqRouterSocket([uri, [identity]])
+
+Router sockets, like dealer sockets, can have multiple peers connected
+to them. Incoming messages are handled the same way as for dealer
+sockets. Outgoing messages should be multi-part messages, where the
+first part of the message is the identity of one of the peers. The
+message will then be sent only to the peer with that identity.
+
+Peers can be dealer, request, or reply sockets.
+
+===| ZmqSocket(type)
+
+{|ZmqSocket|} is a low-level function that is used by {|ZmqPushSocket|}
+etc. to create sockets. Its argument is a string, one of "PUSH", "PULL",
+"REP", "REQ", "PUB", "SUB", DEALER", "ROUTER", and it creates and
+returns a socket of that type.
+
+===| ZmqClose(socket)
+
+{|ZmqClose|} closes {-socket-}. Afterwards, it cannot anymore be bound
+or connected to, nor receive or send messages. Messages already in
+transit will still be delivered.
+
+===| ZmqIsOpen(socket)
+
+{|ZmqIsOpen|} returns true if {-socket-} has not been closed yet,
+false otherwise.
+
+===| ZmqSocketType(socket)
+
+{|ZmqSocketType|} returns the string with which the socket was created
+(see {^ZmqSocket^}).
+
+== Binding and connecting sockets to addresses
+
+===| ZmqBind(socket, uri)
+
+{|ZmqBind|} will {/bind/} {-socket-} to {-uri-}. After being bound
+to the address specified by {-uri-}, the socket can be connected to
+at that address with {^ZmqConnect^}.
+
+===| ZmqConnect(socket, uri)
+
+{|ZmqConnect|} is used to connect {-socket-} to another socket that has
+been bound to {-uri-}. Note that you can connect to an address that has
+not been bound yet; in that case, the connection will be delayed until
+the binding has occurred.
+
+===| ZmqAttach(socket, uri)
+
+{|ZmqAttach|} is a unified interface for binding and connecting a
+socket. If {-uri-} begins with a "+" character, then the {^ZmqConnect^}
+is called with the socket and the rest of the {-uri-} string following
+the "+". Otherwise, {^ZmqBind^} is called with these arguments.
+
+The intended use is to construct a network of connections from a list
+of strings.
+
+===| ZmqSocketURI(socket)
+
+{|ZmqSocketURI|} returns the most recent URI to which {-socket-} has
+been bound or connected. Sockets can be bound to or connected to
+multiple addresses, but only the most recent one is returned.
+
+===| ZmqIsBound(socket)
+
+{|ZmqIsBound|} returns true if the socket has been bound to the
+address returned by {|ZmqSocketURI()|}, false otherwise.
+
+===| ZmqIsConnected(socket)
+
+{|ZmqIsBound|} returns true if the socket has been connected to the
+address returned by {|ZmqSocketURI()|}, false otherwise.
+
+== Sending and receiving messages
+
+ZeroMQ allows the sending and receiving of both string messages and
+multi-part messages. String messages are sequences of bytes (which can
+include zero), provided as a GAP string, while multi-part messages are
+lists of strings, provided as a GAP list. Multi-part messages are
+largely a convenience feature (e.g., to allow a message to have header
+parts without the inconvenience of having to encode those in a single
+string). When sent, multi-part messages will be delivered in their
+entirety; they can be retrieved one part at a time, but if the first
+part is available, the last part is available also.
+
+===| ZmqSend(socket, data)
+
+{|ZmqSend|} will send {-data-} to {-socket-}, according to the routing
+behavior of the underlying socket mechanism.
+
+===| ZmqReceive(socket)
+
+{|ZmqReceive|} will either retrieve a string message or a single part
+of a multi-part message from {-socket-} and return the result as a
+GAP string.
+
+| gap> z := ZmqSocket("inproc://test");;
+| gap> z2 := ZmqSocket("+inproc://test");;
+| gap> ZmqSend(z, "notice");
+| gap> ZmqReceive(z2);
+| "notice"
+| gap> ZmqSend(z, ["alpha", "beta"]);
+| gap> ZmqReceive(z2);
+| "alpha"
+| gap> ZmqReceive(z2);
+| "beta"
+
+===| ZmqReceiveAll(socket)
+
+{|ZmqReceiveAll|} will retrieve a message in its entirety from
+{-socket-} and return the result as a list of strings.
+
+| gap> z := ZmqPushSocket("inproc://test");;
+| gap> z2 := ZmqPullSocket("+inproc://test");;
+| gap> ZmqSend(z, "notice");
+| gap> ZmqReceiveAll(z2);
+| [ "notice" ]
+| gap> ZmqSend(z, ["alpha", "beta"]);
+| gap> ZmqReceiveAll(z2);
+| [ "alpha", "beta" ]
+
+
+===| ZmqReceiveAllAsString(socket, separator)
+
+{|ZmqReceiveAllAsString|} works like {|ZmqReceiveAll|}, but will
+return the result a single string, with multiple parts separated by
+{-separator-}.
+
+| gap> z := ZmqPushSocket("inproc://test");;
+| gap> z2 := ZmqPullSocket("+inproc://test");;
+| gap> ZmqSend(z, "notice");
+| gap> ZmqReceiveAllAsString(z2, "::");
+| "notice"
+| gap> ZmqSend(z, ["alpha", "beta"]);
+| gap> ZmqReceiveAllAsString(z2, "::");
+| "alpha::beta"
+
+===| ZmqHasMore(socket)
+
+{|ZmqHasMore|} will return {|true|} if a socket has one or more
+remaining parts of a multi-part message outstanding, {|false|}
+otherwise.
+
+| gap> z := ZmqPushSocket("inproc://test");;
+| gap> z2 := ZmqPullSocket("+inproc://test");;
+| gap> ZmqSend(z, "notice");
+| gap> ZmqReceive(z2);
+| "notice"
+| gap> ZmqHasMore(z2);
+| false
+| gap> ZmqSend(z, ["alpha", "beta"]);
+| gap> ZmqReceive(z2);
+| "alpha"
+| gap> ZmqHasMore(z2);
+| true
+| gap> ZmqReceive(z2);
+| "beta"
+| gap> ZmqHasMore(z2);
+| false
+
+===| ZmqPoll(inputs, outputs, timeout)
+
+{|ZmqPoll|} is a facility to determine if messages can be received
+from one of the sockets listed in {-inputs-} or sent to one of the
+sockets listed in {-outputs-}. It returns a list of indices describing
+the sockets that at least one message can be received from or sent to.
+The timeout is an integer. If positive, it describes a duration (in
+milliseconds) after which it will return. If zero, the function will
+return immediately. If it is {|-1|}, then the function will block
+indefinitely until at least one message can be retrieved from one of
+the sockets in {-inputs-} or at least one message can be sent to one
+of the sockets in {-outputs-}. If the timeout is non-negative, the
+result can be the empty list. It is guaranteed to have at least one
+element otherwise.
+
+The indices in the result are in the range
+{|[1..Length(inputs)+Length(outputs)|}. An index {|i|} less than or equal to
+{|Length(inputs)|} refers to the socket {|inputs[i]|}. An index {|j|} in
+the range {|[Length(inputs)+1..Length(inputs)+Length(outputs)|} refers
+to the socket {|outputs[j-Length(inputs)]|}. Multiple indices are listed
+in ascending order (i.e., they form a GAP set).
+
+| gap> send1 := ZmqPushSocket("inproc://#1");;
+| gap> recv1 := ZmqPullSocket("+inproc://#1");;
+| gap> send2 := ZmqPushSocket();;
+| gap> recv2 := ZmqPullSocket();;
+| gap> ZmqSetSendCapacity(send2, 1);
+| gap> ZmqSetReceiveCapacity(recv2, 1);
+| gap> ZmqBind(send2, "inproc://#2");
+| gap> ZmqConnect(recv2, "inproc://#2");
+| gap> ZmqSend(send2, "alpha");
+| gap> ZmqSend(send2, "beta"); 
+| gap> ZmqPoll([recv1, recv2], [send1, send2], 0);
+| [ 2, 3 ]
+
+
+In the example above, the code constructs sockets {|send2|} and {|recv2|} with
+a capacity to store at most one outgoing and incoming message,
+respectively. Then the code sends two messages to {|send2|}, one of
+which will be in the incoming buffer of {|recv2|}, and the other will
+remain in the outgoing buffer of {|send2|}. At this point, no more
+messages can be sent to {|send2|}, because its outgoing buffer is at
+capacity, and {|recv2|} has a message that can be received. Conversely,
+{|send1|} can still accept outgoing messages, and {|recv1|} has no
+messages.
+
+Thus, the result is the list {|[2, 3]|}. The {|2|} refers to {|recv2|}
+(as the second socket in the list of inputs), while {|3|} refers to
+{|send1|} (as the first socket in the list of outputs).
+
+== Setting and querying socket properties
+
+Sockets have properties that can be set and queried. Most such
+properties only affect binds and connects that occur after they have
+been set. Binding or connecting a socket first and then setting a
+property will not change the behavior of the socket.
+
+===| ZmqSetIdentity(socket, string)
+
+{|ZmqSetIdentity|} can be used to give the socket an identity. An
+identity is a string of up to 255 characters that should not start with
+a null character (the null character is reserved for internal use).
+
+This identity should be globally unique. Uniqueness is not enforced,
+however, and undefined behavior may result from different sockets
+with the same identity interacting.
+
+===| ZmqGetIdentity(socket)
+
+{|ZmqGetIdentity|} returns the current identity of the socket.
+
+===| ZmqSetSendCapacity(socket, value)
+
+{|ZmqSetSendCapacity|} sets the maximum number of messages that a
+socket can store in its outgoing buffer.
+
+===| ZmqSetReceiveCapacity(socket, value)
+
+{|ZmqSetReceiveCapacity|} sets the maximum number of messages that a
+socket can store in its outgoing buffer.
+
+===| ZmqGetSendCapacity(socket)
+
+{|ZmqGetSendCapacity|} returns the maximum number of messages that a
+socket can store in its outgoing buffer.
+
+===| ZmqGetReceiveCapacity(socket)
+
+{|ZmqGetReceiveCapacity|} returns the maximum number of messages that a
+socket can store in its incoming buffer.
+
+===| ZmqSetSendBufferSize(socket, size)
+
+{|ZmqSetSendBufferSize|} sets the size of the transmission buffer used
+by the underlying operating system structure for sending data.
+
+===| ZmqGetSendBufferSize(socket)
+
+{|ZmqGetSendBufferSize|} returns the size of the transmission buffer used
+by the underlying operating system structure for sending data.
+
+===| ZmqSetReceiveBufferSize(socket, size)
+
+{|ZmqSetReceiveBufferSize|} sets the size of the transmission buffer used
+by the underlying operating system structure for receiving data.
+
+===| ZmqGetReceiveBufferSize(socket)
+
+{|ZmqGetReceiveBufferSize|} returns the size of the transmission buffer used
+by the underlying operating system structure for receiving data.
+
+===| ZmqSubscribe(socket, prefix)
+
+The {|ZmqSubscribe|} function can only be used for Subscriber sockets.
+After calling it, only messages that begin with the given prefix string
+will be received by the subscriber. All others will be silently
+discarded. The function can be used multiple times, and then all
+messages that match any of the prefixes will be received.
+
+===| ZmqUnsubscribe(socket, prefix)
+
+The {|ZmqUnsubscribe|} function removes the given prefix string from
+the socket's subscription list.
