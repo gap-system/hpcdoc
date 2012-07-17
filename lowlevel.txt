@@ -23,12 +23,15 @@ before implementing it in C.
 The {|LOCK|} operation combined with {|UNLOCK|} is a low-level interface
 for the functionality of the {^atomic^} statement.
 
-===| LOCK([obj_1, flag_1, ..., obj_n [, flag_n]])
+===| LOCK([arg_1, ..., arg_n])
 
-{|LOCK|} takes zero or more pairs of parameters, each comprising an
-object {-obj_i-} to be locked and a flag {-flag_i-} that denotes whether
-a read lock (false) or write lock (true) is required. The last flag is
-optional and defaults to true.
+{|LOCK|} takes zero or more pairs of parameters, where each is either
+an object or a boolean value. If an argument is an object, the region
+containing it will be locked. If an argument is the boolean value {|false|},
+all subsequent locks will be read locks; if it is the boolean value
+{|true|}, all subsequent locks will be write locks. If the first
+argument is not a boolean value, all locks until the first boolean
+value will be write locks.
 
 Locks are managed internally as a stack of locked regions; {|LOCK|}
 returns an integer indicating a pointer to the top of the stack; this
@@ -39,7 +42,7 @@ will return {|fail|}.
 Calling {|LOCK()|} with no parameters returns the current lock stack
 pointer.
 
-===| TRYLOCK([obj_1, flag_1, ..., obj_n [, flag_n]])
+===| TRYLOCK([arg_1, ..., arg_n])
 
 {|TRYLOCK|} works similarly to {|LOCK|}. If it cannot acquire all
 region locks, it returns {|fail|} and does not lock any regions.
