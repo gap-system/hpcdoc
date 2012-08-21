@@ -15,6 +15,16 @@ though, it is not possible to delete elements from an atomic record.
 The primary use of atomic lists and records is to facilitate storing the result
 of idempotent operations and to support certain low-level operations.
 
+Atomic lists and records can have three different replacement policies:
+write-once, strict write-once, and rewritable. The replacement policy
+determines whether an already assigned element can be changed. The
+write-once policy allows elements to be assigned only once, with
+subsequent assignments being ignored; the strict write-once policy
+allows elements also to be assigned only once, but subsequent
+assignments will raise an error; the rewritable policy allows elements
+to be assigned different values repeatedly. The default for new atomic
+objects is to be rewritable.
+
 Thread-local records are variants of plain records that are replicated
 on a per-thread basis.
 
@@ -163,20 +173,37 @@ be copied.
 | gap> FromAtomicRecord(r);
 | rec( x := 1, y := 2, z := 3 )
 
-===| ATOMIC_RECORD_REPLACEMENT(record, strategy)
+==| Replacement policy functions
 
-{|ATOMIC_RECORD_REPLACEMENT|} describes how conflicting record
-assignments to the atomic record {-record-} are handled, based on
-the boolean parameter {-strategy-}.
+There are three functions that set the replacement policy of an
+atomic object. All three can also be used with plain lists and records,
+in which case an atomic version of the list or record is first created.
+This allows programmers to elide {|AtomicList|} and {|AtomicRecord|}
+calls when the next step is to change their policy.
 
-If {-strategy-} equals true, then newer assignments will overwrite
-older ones.
+===| MakeWriteOnceAtomic(obj)
 
-If {-strategy-} equals false, then the old value will be kept and the
-new assignment will be silently ignored.
+{|MakeWriteOnceAtomic|} takes a list, record, atomic list, atomic
+record, atomic positional object, or atomic component object as its
+argument. If the argument is a non-atomic list or record, then the
+function first creates an atomic copy of the argument. The function then
+changes the replacement policy of the object to write-once: if an
+element of the object is already bound, then further attempts to assign
+to it will be ignored.
 
-If {-strategy-} equals fail, then the old value will be kept and the
-new assignment will raise a runtime error.
+===| MakeStrictWriteOnceAtomic(obj)
+
+{|MakeStrictWriteOnceAtomic|} works like {|MakeWriteOnceAtomic|}, except
+that the replacement policy is being changed to being strict write-once:
+if an element is already bound, then further attempts to assign to it
+will raise an error.
+
+===| MakeReadWriteAtomic(obj)
+
+{|MakeReadWriteAtomic|} is the inverse of {|MakeWriteOnceAtomic|} and
+{|MakeStrictWriteOnceAtomic|} in that the replacement policy is being
+changed to being rewritable: Elements can be replaced even if they
+are already bound.
 
 == Thread-local records
 
