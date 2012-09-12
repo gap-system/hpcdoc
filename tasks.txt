@@ -75,6 +75,10 @@ without fear of race conditions. To avoid copying, arguments should be
 made shared or public (see the relevant parts of the section on {?regions?});
 shared and public arguments will not be copied.
 
+HPC-GAP currently has multiple implementations of the task API. To
+enable the reference implementation, set the environment variable
+GAP_STDTASKS to a non-empty value before starting GAP.
+
 ==| RunTask(func [, arg1, ..., argn])
 
 {|RunTask|} prepares a task for execution and starts it. The task will
@@ -84,6 +88,26 @@ provided). The return value of {-func-} is the result of the task.
 The {|RunTask|} call itself returns a task object that can be used by
 functions that expect a task argument.
 
+==| ScheduleTask(condition, func, [, arg1, ..., argn])
+
+{|ScheduleTask|} prepares a task for execution, but, unlike {|RunTask|}
+does not start it until {-condition-} is met. See {^Conditions^} on
+how to construct conditions.
+
+| gap> t1 := RunTask(x->x*x, 3);;
+| gap> t2 := RunTask(x->x*x, 4);;
+| gap> t := ScheduleTask([t1, t2], function()
+|             return TaskResult(t1) + TaskResult(t2);
+|      end);
+| gap> TaskResult(t);
+| 25
+
+While the above example could also be achieved with {|RunTask|} in
+lieu of {|ScheduleTask|}, since {|TaskResult|} would wait for {|t1|}
+and {|t2} to complete, the above implementation does not actually
+start the final task until the others are complete, making it more
+efficient, since no additional worker thread needs to be occupied.
+
 ==| DelayTask(func [, arg1, ..., argn])
 
 {|DelayTask|} works as {^RunTask^}, but its start is delayed until
@@ -91,8 +115,13 @@ it is being waited for (including implicitly by calling {^TaskResult^}).
 
 ==| RunAsyncTask(func [, arg1, ..., argn])
 
-{|RunAsyncTask|} creates an asynchronous task. It works as {^RunTask^},
-except that its result will be ignored and it cannot be waited for.
+{|RunAsyncTask|} creates an asynchronous task. It works like {^RunTask^},
+except that its result will be ignored.
+
+==| ScheduleAsyncTask(condition, func, [, arg1, ..., argn])
+
+{|ScheduleAsyncTask|} creates an asynchronous task. It works like
+{^ScheduleTask^}, except that its result will be ignored.
 
 ==| MakeTaskAsync(task)
 
@@ -111,9 +140,14 @@ only an effect if its argument is a task returned by {^DelayTask^};
 otherwise, it is a no-op.
 
 ==| WaitTask(task1, ..., taskn)
+==| WaitTask(condition)
 
 {|WaitTask|} waits until {-task1-} through {-taskn-} have completed;
 after that, it returns.
+
+Alternatively, a condition can be passed to {|WaitTask|} in order to
+wait until a condition is met. See {^Conditions^} on how to construct
+conditions.
 
 ==| WaitTasks(task1, ..., taskn)
 
@@ -170,3 +204,53 @@ This function returns true if the task is asynchronous, true otherwise.
 ==| CullIdleTasks()
 
 This function terminates unused worker threads.
+
+== Conditions
+
+{|ScheduleTask|} and {|WaitTask|} can be made to wait on more complex
+conditions than just tasks. A condition is either a milestone, a task,
+or a list of milestones and tasks. {|ScheduleTask|} starts its task
+and {|WaitTask|} returns when the condition has been met. A condition
+represented by a task is met when the task has completed. A condition
+represented by a milestone is met when the milestone has been achieved
+(see below). A condition represented by a list is met when all
+conditions in the list have been met.
+
+== Milestones
+
+Milestones are a way to represent abstract conditions to which multiple
+tasks can contribute.
+
+===| NewMilestone([list])
+
+The {|NewMilestone|} function creates a new milestone. Its argument is
+a list of targets, which must be a list of integers and/or strings. If
+omitted, the list defaults to {|[0]|}.
+
+===| ContributeToMilestone(milestone, target)
+
+The {|ContributeToMilestone|} milestone function contributes the
+specified target to the milestone. Once all targets have been contributed
+to a milestone, it has been achieved.
+
+===| AchieveMilestone(milestone)
+
+The {|AchieveMilestone|} function allows a program to achieve a milestone
+in a single step without adding individual targets to it. This is most
+useful in conjunction with the default value for {|NewMilestone|}, e.g.
+
+| gap> m := NewMilestone();;
+| gap> AchieveMilestone(m);
+
+===| IsAchievedMilestone(milestone)
+
+The {|IsAchievedMilestone|} tests explicitly if a milestone has been
+achieved. It returns {|true|} on success, {|false|} otherwise.
+
+| gap> m := NewMilestone([1,2]);;
+| gap> ContributeToMilestone(m, 1);
+| gap> IsAchievedMilestone(m);
+| false
+| gap> ContributeToMilestone(m, 2);
+| gap> IsAchievedMilestone(m);
+| true
