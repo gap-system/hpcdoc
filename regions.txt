@@ -96,13 +96,17 @@ regions, the public, and the readonly region are given names by default.
 
 Multiple regions can have the same name.
 
-== Runtime errors
+== Controlling access to regions
 
 If either GAP code or a kernel primitive attempts to access an object
 that it is not allowed to access according to these semantics, either a
 "write guard error" (for a failed write access) or a "read guard error"
 (for a failed read access) will be raised. The global variable
 {|LastInaccessible|} will contain the object that caused such an error.
+
+One exception is that threads can modify objects in regions that they
+have only read access (but not write access) to using write-once
+functions ({^^writeonce^^}).
 
 To inspect objects whose contents lie in other regions (and therefore
 cannot be displayed by {|PrintObj|} or {|ViewObj|}, the functions
@@ -384,4 +388,78 @@ Examples:
 | >    od;
 | gap> l3;
 | [ 6, 7, 8, 4, 5 ]
+
+==[writeonce] Write-once functionality
+
+There is an exception to the rule that objects can only be modified if
+a thread has write access to a region. A limited sets of objects can
+be modified using the "bind once" family of functions. These allow the
+modifications of objects to which a thread has read access in a limited
+fashion.
+
+For reasons of implementation symmetry, these functions can also be
+used on the atomic versions of these objects.
+
+Implementation note: The functionality is not currently available for
+component objects.
+
+== BindOnce(obj, index, value)
+
+{|BindOnce|} modifies {-obj-}, which can be a positional object, atomic
+positional object, component object, or atomic component object. It
+inspects {|obj![index]|} for the positional versions or {|obj!.(index)}
+for the component versions. If the respective element is not yet bound,
+{-value-} is assigned to that element. Otherwise, no modification
+happens. The test and modification occur as one atomic step. The
+function returns the value of the element; i.e. the old value if the
+element was bound and {-value-} if it was unbound.
+
+The intent of this function is to allow concurrent initialization of
+objects, where multiple threads may attempt to set a value concurrently.
+Only one will succeed; all threads can then use the return value of
+{|BindOnce|} as the definitive value of the element. It also allows
+for the lazy initialization of objects in the read-only region.
+
+The current thread needs to have at least read access to {-obj-}, but
+does not require write access.
+
+== TestBindOnce(obj, index, value)
+
+{|TestBindOnce|} works like {|BindOnce|}, except that it returns
+{|true|} if the value could be bound and {|false|} otherwise.
+
+== BindOnceExpr(obj, index, expr)
+
+{|BindOnceExpr|} works like {|BindOnce|}, except that it evaluates the
+parameterless function {-expr-} to determine the value. It will only
+evaluate {-expr-} if the element is not bound.
+
+For positional objects, the implementation works as follows:
+
+| BindOnceExprPosObj := function(obj, index, expr)
+|   if not IsBound(obj![index]) then
+|     return BindOnce(obj, index, expr());
+|   else
+|     return obj![index]);
+|   fi;
+| end;
+
+The implementation for component objects works analogously.
+
+The intent is to avoid unnecessary computations if the value is
+already bound. Note that this cannot be avoided entirely, because
+{|obj![index]} or {|obj!.(index)|} can be bound while {-expr-} is
+evaluated, but it can minimize such occurrences.
+
+== TestBindOnceExpr(obj, index, expr)
+
+{|TestBindOnceExpr|} works like {|BindOnceExpr|}, except that it returns
+{|true|} if the value could be bound and {|false|} otherwise.
+
+== StrictBindOnce(obj, index, expr)
+
+{|StrictBindOnce|} works like {|BindOnce|}, except that it raises an
+error if the element is already bound. This is intended for cases
+where a read-only object is initialized, but where another thread
+trying to initialize it concurrently would be an error.
 
