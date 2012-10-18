@@ -134,7 +134,7 @@ return {-default-} rather than blocking.
 
 {|MultiSendChannel|} allows the sending of all the objects contained
 in the list {-list-} to {-channel-} as a single operation. The list
-must be dense and is not modified byt he call. The function will
+must be dense and is not modified by the call. The function will
 send elements starting at index 1 until all elements have been sent.
 If a channel with finite capacity is full, then the operation will
 block until all elements can be sent.

@@ -1,6 +1,6 @@
 = Thread functions
 
-HPC GAP has low-level functionality to support explicit creation
+HPC-GAP has low-level functionality to support explicit creation
 of threads. In practice, programmers should use higher-level
 functionality, such as tasks, to describe concurrency. The thread
 functions described here exist to facilitate the construction of
