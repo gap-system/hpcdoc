@@ -1,0 +1,48 @@
+= Semaphores
+
+Semaphores are synchronized counters; they can also be used
+to simulate locks.
+
+==| CreateSemaphore([value])
+
+The function {|CreateSemaphore|} takes an optional argument, which
+defaults to zero. It is the counter with which the semaphore is
+initialized.
+
+| gap> sem := CreateSemaphore(1);
+| <semaphore 0x1108e81c0: count = 1>
+
+==| WaitSemaphore(sem);
+
+{|WaitSemaphore|} receives a previously created semaphore as its
+argument. If the semaphore's counter is greater than zero, it decrements
+the counter and returns; if the counter is zero, it waits until another
+thread increases it via {|SignalSemaphore|}, then decrements the counter
+and returns.
+
+| gap> sem := CreateSemaphore(1);
+| <semaphore 0x1108e81c0: count = 1>
+| gap> WaitSemaphore(sem);
+| gap> sem;
+| <semaphore 0x1108e81c0: count = 0>
+
+==| SignalSemaphore(sem)
+
+{|SignalSemaphore|} receives a previously created semaphore as its
+argument. It increments the semaphore's counter and returns.
+
+| gap> sem := CreateSemaphore(1);
+| <semaphore 0x1108e81c0: count = 1>
+| gap> WaitSemaphore(sem);
+| gap> sem;
+| <semaphore 0x1108e81c0: count = 0>
+| gap> SignalSemaphore(sem);
+| gap> sem;
+| <semaphore 0x1108e81c0: count = 1>
+
+==| Simulating locks
+
+In order to use semaphores to simulate locks, create a semaphore
+with an initial value of 1. {|WaitSemaphore|} is then equivalent
+to a lock operation, {|SignalSemaphore|} is equivalent to an
+unlock operation.

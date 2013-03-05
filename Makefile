@@ -1,4 +1,4 @@
-SRC=preamble.txt tasks.txt vars.txt regions.txt ui.txt aobjects.txt threads.txt channels.txt syncvars.txt zmq.txt lowlevel.txt
+SRC=preamble.txt tasks.txt vars.txt regions.txt ui.txt aobjects.txt threads.txt channels.txt semaphores.txt syncvars.txt zmq.txt lowlevel.txt
 DENOTE=bin/denote
 
 all: html
