@@ -72,8 +72,10 @@ function. The hash function is based on the object reference, not its
 contents (except for short integers and finite field elements).
 
 | gap> l := [ 1, 2, 3];;
+| gap> f := l -> Sum(l);;
 | gap> HASH_LOCK(l);   # lock 'l'
 | gap> f(l);           # do something with 'l'
+| 6
 | gap> HASH_UNLOCK(l); # unlock 'l'
 
 Hash locks should only be used for very short operations, since there

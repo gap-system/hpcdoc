@@ -35,7 +35,7 @@ receiving, {-obj-} cannot be accessed by either thread.
 
 This example demonstrates sending messages acoss a channel.
 
-| gap> ch1 := CreateChannel();
+| gap> ch1 := CreateChannel();;
 | gap> SendChannel(ch1,1);
 | gap> ch1;
 | <channel 0x460339c: 1 elements, 0 waiting>
@@ -64,29 +64,28 @@ This example demonstrates sending messages acoss a channel.
 | gap> ReceiveChannel(ch3); # the thread is blocked until we read from ch3
 | 2
 | Thread finished
-| gap> WaitThread(t); 
-| true
+| gap> WaitThread(t);
 
 ==| TransmitChannel(channel, obj)
 
 {|TransmitChannel|} is identical to {|SendChannel|}, except that it
 does not perform automatic region migration of thread-local objects.
 
-| gap> ch := CreateChannel(channel);;
-| gap> l := [ 1, 2, 3];
-| gap> original_region := RegionOf(l);
+| gap> ch := CreateChannel(5);;
+| gap> l := [ 1, 2, 3];;
+| gap> original_region := RegionOf(l);;
 | gap> SendChannel(ch, l);
 | gap> WaitThread(CreateThread(function()
 | >      local ob; ob := ReceiveChannel(ch);
-| >      Display(RegionOf(ob) == original_region;
+| >      Display(RegionOf(ob) = original_region);
 | >    end);
 | false
-| gap> l := [ 1, 2, 3];
-| gap> original_region := RegionOf(l);
+| gap> l := [ 1, 2, 3];;
+| gap> original_region := RegionOf(l);;
 | gap> TransmitChannel(ch, l);
 | gap> WaitThread(CreateThread(function()
 | >      local ob; ob := ReceiveChannel(ch);
-| >      Display(RegionOf(ob) == original_region;
+| >      Display(RegionOf(ob) = original_region);
 | >    end);
 | true
 

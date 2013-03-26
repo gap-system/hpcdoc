@@ -20,9 +20,10 @@ global variables, each thread can assign a distinct value to a thread-local
 variable.
 
 | gap> MakeThreadLocal("x");
-| gap> x := 1;
+| gap> x := 1;;
 | gap> WaitTask(RunTask(function() x := 2; end));
 | gap> x;
+| 1
 
 As can be seen here, the assignment to {|x|} in a separate thread
 does not overwrite the value of {|x|} in the main thread.

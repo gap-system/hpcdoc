@@ -88,9 +88,6 @@ atomic list.
 | <fixed atomic list of size 2>
 | gap> a[3] := 101;
 | Error, Atomic List Element: <pos>=3 is an invalid index for <list>
-| not in any function at line 4 of *stdin*
-| you can replace value <pos> via 'return <pos>;'
-| brk>
 
 ===| FromAtomicList(atomic_list)
 
@@ -114,7 +111,7 @@ addition has been performed.
 | gap> ATOMIC_ADDITION(al, 2, 7);
 | 12
 | gap> FromAtomicList(al);
-| [ 4, 12, 7 ]
+| [ 4, 12, 6 ]
 
 ==| COMPARE_AND_SWAP(atomic_list, index, old, new)
 
@@ -153,9 +150,10 @@ initially populate the atomic record.
 | gap> r := AtomicRecord(rec( x := 2 ));
 | <atomic record 1/2 full>
 | gap> r.y := 3;
+| 3
 | gap> TaskResult(RunTask(function() return r.x + r.y; end));
 | 5
-| gap> [ r.x, r.y ]
+| gap> [ r.x, r.y ];
 | [ 2, 3 ]
 
 Any atomic record can later grow beyond its initial capacity. There is
@@ -212,13 +210,13 @@ record for each indvidual thread that is accessed by the same name
 in each thread.
 
 | gap> r := ThreadLocal();; # create new thread-local record
-| gap> r.x := 99;
+| gap> r.x := 99;;
 | gap> WaitThread( CreateThread( function()
 | >                              r.x := 100; 
 | >                              Display(r.x);
 | >                              end ) );
 | 100
-| gap> r.x
+| gap> r.x;
 | 99
 
 As can be seen above, even though {|r.x|} is overwritten in the second

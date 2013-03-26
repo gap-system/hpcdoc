@@ -377,13 +377,13 @@ Examples:
 | gap> l := ShareObj([1,2,3]);;
 | gap> atomic readwrite l do l[3] := 9; od;
 | gap> atomic l do l[2] := 4; od;
-| gap> atomic readonly l do Display(l) od;
+| gap> atomic readonly l do Display(l); od;
 | [ 1, 4, 9 ]
 
 | gap> l := ShareObj([1,2,3,4,5]);;
 | gap> l2 := ShareObj([6,7,8]);;
-| gap> atomic readwrite l readonly l2 do
-| >      for i in [1..3] do l[i] := l2[i];
+| gap> atomic readwrite l, readonly l2 do
+| >      for i in [1..3] do l[i] := l2[i]; od;
 | >      l3 := AdoptObj(l);
 | >    od;
 | gap> l3;
