@@ -38,7 +38,7 @@ resized. Their contents can also be read as normal plain lists using
 
 | gap> a := AtomicList([1,2,4]);
 | <atomic list of size 3>
-| gap> WaitTask(RunTask(function() a[1] := a[1] + a[2]); end);
+| gap> WaitTask(RunTask(function() a[1] := a[1] + a[2]; end));
 | gap> a[1];
 | 3
 | gap> FromAtomicList(a);
@@ -62,11 +62,11 @@ each set to the value of {-obj-}.
 | <atomic list of size 3>
 | gap> al[3];
 | 4
-| gap> al := AtomicList(10, "alpha");
+| gap> al := AtomicList(10, `"alpha");
 | <atomic list of size 10>
 | gap> al[3];
 | "alpha"
-| gap> WaitTask(RunTask(function() al[3] := "beta"; end));
+| gap> WaitTask(RunTask(function() al[3] := `"beta"; end));
 | gap> al[3];
 | "beta"
 
@@ -110,7 +110,7 @@ deterministic.
 {|atomic_list[index]|}. It returns the value of atomic_list[index] after the
 addition has been performed.
 
-| gap> al := AtomicList([4,5,6]);;
+| gap> al := FixedAtomicList([4,5,6]);;
 | gap> ATOMIC_ADDITION(al, 2, 7);
 | 12
 | gap> FromAtomicList(al);
@@ -213,9 +213,10 @@ in each thread.
 
 | gap> r := ThreadLocal();; # create new thread-local record
 | gap> r.x := 99;
-| gap> WaitThread(CreateThread(function()
-| >      r.x := 100; Display(r.x);
-| >    end));
+| gap> WaitThread( CreateThread( function()
+| >                              r.x := 100; 
+| >                              Display(r.x);
+| >                              end ) );
 | 100
 | gap> r.x
 | 99
