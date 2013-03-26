@@ -147,18 +147,20 @@ visible to other processors before any of the code executed after.
 
 Example:
 
-| gap> f := function() y := 1; return 2; end;;
+| gap> y:=0;; f := function() y := 1; return 2; end;;
 | gap> x := ORDERED_WRITE(f());
+| 2
 
 Here, the write barrier ensure that the assignment to {|y|} that
 occurs during the call of {|f()|} becomes visible to other
-processors before or at the same time as the assignmnt to {|x|}.
+processors before or at the same time as the assignment to {|x|}.
 
 This can also be done differently, with the same semantics:
 
 | gap> t := f();; # temporary variable
-| gap> ORDERED_WRITE(0); # dummy argument
+| gap> ORDERED_WRITE(0);; # dummy argument
 | gap> x := t;
+| 2
 
 ===| ORDERED_READ(expr)
 

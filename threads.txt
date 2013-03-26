@@ -73,7 +73,7 @@ pause until the kernel function returns.
 While a thread is paused, the thread that initiated the pause can
 access the paused thread's thread-local region.
 
-| gap> loop := function() while true do Sleep(1); od; end;
+| gap> loop := function() while true do Sleep(1); od; end;;
 | gap> x := fail;;
 | gap> th := CreateThread(function() x := [1, 2, 3]; loop(); end);;
 | gap> PauseThread(th);

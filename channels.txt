@@ -78,7 +78,7 @@ does not perform automatic region migration of thread-local objects.
 | gap> WaitThread(CreateThread(function()
 | >      local ob; ob := ReceiveChannel(ch);
 | >      Display(RegionOf(ob) = original_region);
-| >    end);
+| >    end));
 | false
 | gap> l := [ 1, 2, 3];;
 | gap> original_region := RegionOf(l);;
@@ -86,7 +86,7 @@ does not perform automatic region migration of thread-local objects.
 | gap> WaitThread(CreateThread(function()
 | >      local ob; ob := ReceiveChannel(ch);
 | >      Display(RegionOf(ob) = original_region);
-| >    end);
+| >    end));
 | true
 
 

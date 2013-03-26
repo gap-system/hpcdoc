@@ -201,7 +201,6 @@ requires exclusive access to {-obj-}.
 | gap> IsThreadLocal(l);
 | false
 | gap> atomic l do AdoptObj(l); od;
-| [ 1, 2, 3 ]
 | gap> IsThreadLocal(l);
 | true
 
@@ -223,9 +222,9 @@ The resulting objects will be located in the current thread's thread-local
 region. The function returns the copy as its result.
 
 | gap> l := MakeReadOnly([1,2,3]);
-| [ 1, 2, 3 ];
+| [ 1, 2, 3 ]
 | gap> l2 := CopyRegion(l);
-| [ 1, 2, 3 ];
+| [ 1, 2, 3 ]
 | gap> RegionOf(l) = RegionOf(l2);
 | false
 | gap> IsIdenticalObj(l, l2);
