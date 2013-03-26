@@ -2,6 +2,7 @@
 
 There are experimental bindings to the ZeroMQ library available
 (http://www.zeromq.net/). This section describes these bindings.
+You need to build HPC-GAP with "make ZMQ=yes" to activate them. 
 
 Messages in ZeroMQ are sent between endpoints called {/sockets/}.
 Each socket can be {/bound/} to an address specified by a URI and other
