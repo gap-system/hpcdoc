@@ -12,7 +12,7 @@ written with {^SyncWrite^} and read with {^SyncRead^}.
 | gap> RunAsyncTask(function()
 | >      Sleep(10);
 | >      SyncWrite(sv, MakeImmutable([1, 2, 3]));
-| >    end);
+| >    end);;
 | gap> SyncRead(sv);
 | [ 1, 2, 3 ]
 

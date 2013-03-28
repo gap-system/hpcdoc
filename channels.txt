@@ -33,7 +33,7 @@ migrated (along with all subobjects contained in the same region) to the
 receiving thread's thread-local data space. In between sending and
 receiving, {-obj-} cannot be accessed by either thread.
 
-This example demonstrates sending messages acoss a channel.
+This example demonstrates sending messages across a channel.
 
 | gap> ch1 := CreateChannel();;
 | gap> SendChannel(ch1,1);
@@ -57,12 +57,12 @@ This example demonstrates sending messages acoss a channel.
 | > Sleep(10);
 | > x:=ReceiveChannel(ch2);
 | > Sleep(10);
-| > SendChannel(ch2,x);
+| > SendChannel(ch3,x);
 | > Print("Thread finished\n");
 | > end);;
-| > SendChannel(ch3,3); # this blocks until the thread reads from ch3
+| > SendChannel(ch2,3); # this blocks until the thread reads from ch2
 | gap> ReceiveChannel(ch3); # the thread is blocked until we read from ch3
-| 2
+| 1
 | Thread finished
 | gap> WaitThread(t);
 

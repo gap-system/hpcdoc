@@ -278,9 +278,9 @@ has read access to {-obj-}.
 | true
 | gap> l := ShareObj([1,2,3]);;
 | gap> HaveReadAccess(l);
-| false;
-| gap> atomic readonly l do t := HaveReadAccess(l); od;; l;
-| true;
+| false
+| gap> atomic readonly l do t := HaveReadAccess(l); od;; t;
+| true
 
 ===| HaveWriteAccess(obj)
 
@@ -291,9 +291,9 @@ has write access to {-obj-}.
 | true
 | gap> l := ShareObj([1,2,3]);;
 | gap> HaveWriteAccess(l);
-| false;
-| gap> atomic readwrite l do t := HaveWriteAccess(l); od;; l;
-| true;
+| false
+| gap> atomic readwrite l do t := HaveWriteAccess(l); od;; t;
+| true
 
 ===| MakeReadOnly(obj)
 
