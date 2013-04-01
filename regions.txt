@@ -388,6 +388,22 @@ Examples:
 | gap> l3;
 | [ 6, 7, 8, 4, 5 ]
 
+== Atomic functions
+
+Instead of atomic regions, entire functions can be declared to be
+atomic. This has the same effect as though the function's body
+were enclosed in an atomic statement. Function arguments can be
+declared either {|readwrite|} or {|readonly|}; they will be locked
+in the same way as for a lock statement. If a function argument is
+preceded by neither {|readwrite|} nor {|readonly|}, the corresponding
+object will not be locked.
+
+Example:
+
+| gap> AddAtomic := atomic function(readwrite list, readonly item) do
+| >      Add(l, item);
+| >    end;
+
 ==[writeonce] Write-once functionality
 
 There is an exception to the rule that objects can only be modified if
