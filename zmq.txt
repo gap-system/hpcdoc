@@ -222,34 +222,34 @@ GAP string.
 | gap> ZmqReceive(z2);
 | "beta"
 
-===| ZmqReceiveAll(socket)
+===| ZmqReceiveList(socket)
 
-{|ZmqReceiveAll|} will retrieve a message in its entirety from
+{|ZmqReceiveList|} will retrieve a message in its entirety from
 {-socket-} and return the result as a list of strings.
 
 | gap> z := ZmqPushSocket("inproc://test");;
 | gap> z2 := ZmqPullSocket("+inproc://test");;
 | gap> ZmqSend(z, "notice");
-| gap> ZmqReceiveAll(z2);
+| gap> ZmqReceiveList(z2);
 | [ "notice" ]
 | gap> ZmqSend(z, ["alpha", "beta"]);
-| gap> ZmqReceiveAll(z2);
+| gap> ZmqReceiveList(z2);
 | [ "alpha", "beta" ]
 
 
-===| ZmqReceiveAllAsString(socket, separator)
+===| ZmqReceiveListAsString(socket, separator)
 
-{|ZmqReceiveAllAsString|} works like {|ZmqReceiveAll|}, but will
+{|ZmqReceiveListAsString|} works like {|ZmqReceiveList|}, but will
 return the result a single string, with multiple parts separated by
 {-separator-}.
 
 | gap> z := ZmqPushSocket("inproc://test");;
 | gap> z2 := ZmqPullSocket("+inproc://test");;
 | gap> ZmqSend(z, "notice");
-| gap> ZmqReceiveAllAsString(z2, "::");
+| gap> ZmqReceiveListAsString(z2, "::");
 | "notice"
 | gap> ZmqSend(z, ["alpha", "beta"]);
-| gap> ZmqReceiveAllAsString(z2, "::");
+| gap> ZmqReceiveListAsString(z2, "::");
 | "alpha::beta"
 
 ===| ZmqHasMore(socket)
