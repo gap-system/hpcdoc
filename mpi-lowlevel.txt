@@ -1,0 +1,47 @@
+= Low-level MPI Bindings
+These primitives provide the functionality similar to the C MPI bindings.
+They have the same name as their C counterparts,
+with somewhat simpler interface. All of these functions deal with
+'raw' data (i.e. they assume that GAP objects that are transferred
+between MPI nodes are already marshalled to strings), and should only
+be used if higher-level models (tasks, global objects, distributed
+data structures and skeletons) are not sufficient or do not give acceptable
+performance. 
+
+==| MPI_Comm_size() 
+Returns the number of MPI nodes in the application.
+
+==| MPI_Comm_rank() 
+Returns the rank of the MPI node that is calling it. The rank is
+between 0 and {|MPI_Comm_size()|}-1.
+
+==| MPI_Get_count()
+Returns the size (in bytes) of the last received message on this node.
+
+==| MPI_Get_source()
+Returns the rank of the sender node of the last received message.
+
+==| MPI_Get_tag()
+Returns the tag of the last received message.
+
+==| MPI_Send(message, destination[, tag])
+Sends the message to the destination node. {|message|} is a string
+containing the message to be sent, {|destination|} is a rank of the
+receiving process, and {|tag|} is an optional integer parameter specifying the
+tag of the message (which can be retreived on the destination process
+by {|MPI_Get_tag()|}.
+
+==| MPI_Recv(message[, source, tag])
+Receives the message and puts it into {|message|} string buffer.  If
+{|source|} is specified, only message from that MPI node is
+received. If {|tag|} is specified, only the message with that tag is received.
+
+==| MPI_Probe()
+Blocking probe for a message. The call returns when a new message is
+available, and the message can be received with {|MPI_Recv|}.
+
+==| MPI_Iprobe()
+Non-blocking probe for a message. The call returns true if a new
+message is available for receiving (via {|MPI_Recv|}), and false
+otherwise.
+
