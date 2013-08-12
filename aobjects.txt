@@ -209,7 +209,7 @@ Thread-local records allow an easy way to have a separate copy of a
 record for each indvidual thread that is accessed by the same name
 in each thread.
 
-| gap> r := ThreadLocal();; # create new thread-local record
+| gap> r := ThreadLocalRecord();; # create new thread-local record
 | gap> r.x := 99;;
 | gap> WaitThread( CreateThread( function()
 | >                              r.x := 100; 
@@ -222,9 +222,9 @@ in each thread.
 As can be seen above, even though {|r.x|} is overwritten in the second
 thread, it does not affect the value of {|r.x| in the first thread.
 
-===| ThreadLocal([defaults [, constructors]])
+===| ThreadLocalRecord([defaults [, constructors]])
 
-{|ThreadLocal|} creates a new thread-local record. It accepts up to
+{|ThreadLocalRecord|} creates a new thread-local record. It accepts up to
 two initial arguments. The {-defaults-} argument is a record of default
 values with which each thread-local copy is initially populated (this
 happens on demand, so values are not actually read until needed).
@@ -234,7 +234,7 @@ that return an initial value for the respective element. Constructors are
 evaluated only once per thread and only if the respective element is
 accessed without having previously been assigned a value.
 
-| gap> r := ThreadLocal( rec(x := 99),
+| gap> r := ThreadLocalRecord( rec(x := 99),
 | >      rec(y := function() return 101; end));;
 | gap> r.x;
 | 99
@@ -251,7 +251,7 @@ accessed without having previously been assigned a value.
 after its creation. Here, {-record-} is an atomic record, {-name-} is
 the string of the field name, and {-value-} is the value.
 
-| gap> r := ThreadLocal();;
+| gap> r := ThreadLocalRecord();;
 | gap> SetTLDefault(r, "x", 314);
 | gap> r.x;
 | 314
@@ -264,7 +264,7 @@ the string of the field name, and {-value-} is the value.
 thread-local record field after its creation, similar to
 {|SetTLDefault|}.
 
-| gap> r := ThreadLocal();;
+| gap> r := ThreadLocalRecord();;
 | gap> SetTLConstructor(r, "x", function() return 2718; end);
 | gap> r.x;
 | 2718
