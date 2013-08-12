@@ -26,6 +26,21 @@ statement to acquire a read or write lock beforehand.
 
 See the section on {|atomic|} statements ({^^atomic^^}) for details.
 
+== Ordering of shared regions
+
+Shared regions are by default ordered; each shared region has an
+associated numeric precedence level. Regions can generally only be
+locked in order of descending precedence. The purpose of this mechanism
+is to avoid accidental deadlocks.
+
+The ordering requirement can be overridden in two ways: regions with
+a negative precedence are excluded from it. This exception should be
+used with care, as it can lead to deadlocks.
+
+Alternatively, two or more regions can be locked simultaneously via
+the {|atomic|} statement. In this case, the ordering of these regions
+relative to each other can be arbitrary.
+
 == The public region
 
 A special public region contains objects that only permit atomic
@@ -123,6 +138,44 @@ set to {-name-}.
 | gap> NewRegion("example region");
 | <region: example region>
 
+{|NewRegion|} will create a region with a high precedence level. It
+is intended to be called by user code.
+
+===| NewLibraryRegion([name])
+
+{|NewLibraryRegion|} functions like {|NewRegion|}, except that
+the precedence of the region it creates is below that of
+{|NewRegion|}. It is intended to be used by user libraries and GAP
+packages.
+
+===| NewSystemRegion([name])
+
+{|NewSystemRegion|} functions like {|NewRegion|}, except that
+the precedence of the region it creates is below that of
+{|NewLibraryRegion|}. It is intended to be used by the standard GAP
+library.
+
+===| NewKernelRegion([name])
+
+{|NewKernelRegion|} functions like {|NewRegion|}, except that
+the precedence of the region it creates is below that of
+{|NewSystemRegion|}. It is intended to be used by the GAP kernel,
+and GAP library code that interacts closely with the kernel.
+
+===| NewInternalRegion([name])
+
+{|NewInternalRegion|} functions like {|NewRegion|}, except
+that the precedence of the region it creates is the lowest available. It
+is intended to be used for regions that are self-contained; i.e. no
+function that uses such a region may lock another region while accessing
+it.
+
+===| NewSpecialRegion([name])
+
+{|NewLibraryRegion|} functions like {|NewRegion|}, except that
+the precedence of the region it creates is negative. It is thus exempt
+from normal ordering and deadlock checks.
+
 ===| RegionOf(obj)
 
 | gap> RegionOf(1/2);
@@ -154,6 +207,43 @@ the object and all its subobjects to that region. If the optional
 argument {-name-} is provided, then the name of the new region is
 set to {-name-}.
 
+{|ShareObj|} will create a region with a high precedence level. It
+is intended to be called by user code.
+
+===| ShareLibraryObj(obj[, name])
+
+{|ShareLibraryObj|} functions like {|ShareObj|}, except that the
+precedence of the region it creates is below that of {|ShareObj|}. It is
+intended to be used by user libraries and GAP packages.
+
+===| ShareSystemObj(obj[, name])
+
+{|ShareSystemObj|} functions like {|ShareObj|}, except that the
+precedence of the region it creates is below that of
+{|ShareLibraryObj|}. It is intended to be used by the standard GAP
+library.
+
+===| ShareKernelObj(obj[, name])
+
+{|ShareKernelObj|} functions like {|ShareObj|}, except that the
+precedence of the region it creates is below that of {|ShareSystemObj|}.
+It is intended to be used by the GAP kernel, and GAP library code that
+interacts closely with the kernel.
+
+===| ShareInternalObj(obj[, name])
+
+{|ShareInternalObj|} functions like {|ShareObj|}, except that the
+precedence of the region it creates is the lowest available. It is
+intended to be used for regions that are self-contained; i.e. no
+function that uses such a region may lock another region while accessing
+it.
+
+===| ShareSpecialObj(obj[, name])
+
+{|ShareLibraryObj|} functions like {|ShareObj|}, except that the
+precedence of the region it creates is negative. It is thus exempt
+from normal ordering and deadlock checks.
+
 ===| ShareSingleObj(obj[, name])
 
 The {|ShareSingleObj|} function creates a new shared region and migrates
@@ -167,6 +257,44 @@ argument {-name-} is provided, then the name of the new region is set to
 | >      Display([ IsShared(m), IsShared(m[1]), IsShared(m[2]) ]);
 | >    od;
 | [ true, false, false ]
+
+{|ShareSingleObj|} will create a region with a high precedence level. It
+is intended to be called by user code.
+
+===| ShareSingleLibraryObj(obj[, name])
+
+{|ShareSingleLibraryObj|} functions like {|ShareSingleObj|}, except that
+the precedence of the region it creates is below that of
+{|ShareSingleObj|}. It is intended to be used by user libraries and GAP
+packages.
+
+===| ShareSingleSystemObj(obj[, name])
+
+{|ShareSingleSystemObj|} functions like {|ShareSingleObj|}, except that
+the precedence of the region it creates is below that of
+{|ShareSingleLibraryObj|}. It is intended to be used by the standard GAP
+library.
+
+===| ShareSingleKernelObj(obj[, name])
+
+{|ShareSingleKernelObj|} functions like {|ShareSingleObj|}, except that
+the precedence of the region it creates is below that of
+{|ShareSingleSystemObj|}. It is intended to be used by the GAP kernel,
+and GAP library code that interacts closely with the kernel.
+
+===| ShareSingleInternalObj(obj[, name])
+
+{|ShareSingleInternalObj|} functions like {|ShareSingleObj|}, except
+that the precedence of the region it creates is the lowest available. It
+is intended to be used for regions that are self-contained; i.e. no
+function that uses such a region may lock another region while accessing
+it.
+
+===| ShareSingleSpecialObj(obj[, name])
+
+{|ShareSingleLibraryObj|} functions like {|ShareSingleObj|}, except that
+the precedence of the region it creates is negative. It is thus exempt
+from normal ordering and deadlock checks.
 
 ===| MigrateObj(obj, target)
 
@@ -387,6 +515,12 @@ Examples:
 | >    od;
 | gap> l3;
 | [ 6, 7, 8, 4, 5 ]
+
+Atomic statements must observe region ordering. That means that
+the highest precedence level of a region locked by an atomic
+statement must be less than the lowest precedene level of a
+region that is locked by the same thread at the time the atomic
+statement is executed.
 
 == Atomic functions
 
