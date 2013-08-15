@@ -1,0 +1,182 @@
+= Global Objects and Handles
+Global objects are objects that can be accessed from multiple distributed nodes. They are accessed via object handles that
+represent global pointers to these objects. The same object handle can exist on multiple nodes, pointing to the same global
+object. Handles can be used to migrate, copy and change objects they point to.
+
+== Global Object Handles
+Global object handles represent pointers to global objects. The same
+handle can live on different nodes. Furthermore, it is possible for
+handles to keep cached copy of the global object on a local node.
+
+The type of a handle determines the operations that are allowed
+with the object they point to.
+There are three types of handles:
+
+- A read-only handle is a handle to an object that can be read only. Since the object that a read-only handle points to cannot be changed,
+this object can freely be moved and copied between nodes (via {|RemoteCopyObj|}, {|RemoteCloneObj|}, {|RemotePushObj|} and 
+{|RemotePullObj|}, see below). However, changing the object that such handle points to (via {|SetByHandle|}, see below) is not allowed.
+
+- A read-write Handle is a handle to an object that can be read and 
+ modified. To ensure consistency in accessing this object, MPIGAP
+ensures that only one copy of the object exists, which means that
+ copying of such object between nodes (via {|RemoteCopyObj|} and 
+{|RemoteCloneObj|}) is not allowed, and will result in an error. Moving
+the object between nodes (via {|RemotePushObj|} and {|RemotePullObj|}) is
+allowed, and so is changing the object (via {|SetByHandle|}). 
+
+- A volatile handle is a handle to an object that can be freely moved,
+copied and changed. This means that the consistency of such object on
+multiple nodes in not guaranteed, and the same global handle on
+multiple nodes can point to different objects.
+
+===| CreateHandleFromObj(obj [, access_type])
+{|CreateHandleFromObj|} takes an object {|obj|} and creates a handle for
+accessing that object. {|access_type|} can be one of the constants
+{|ACCESS_TYPES.READ_ONLY|}, {|ACCESS_TYPES.READ_WRITE|} or
+{|ACCESS_TYPES.VOLATILE|}. If {|access_type|} is not provided, the
+default access type is {|ACCESS_TYPES.READ_ONLY|}. Note that setting a
+handle to read-only also makes the underlying object immutable.
+
+When a handle for a boxed object (anything other than small integer or
+finite field element) is created, the object is automatically put in
+shared region, so for all future accesses to that object a lock needs
+to be obtained. 
+
+Examples:
+
+| gap> x := [1,2,3,4,5];;
+| gap> handle := CreateHandleFromObj(x);;
+
+creates a read-only handle for the list {|x|}, making the list
+immutable in turn.
+
+| gap> x := 42;;
+| gap> handle := CreateHandleFromObj(x,ACCESS_TYPES.READ_WRITE);;
+
+creates a read-write handle for the integer object. The integer is
+copied into the handle, and can be changed via {|SetByHandle|} and
+{|GetByHandle|} (see below), not via changes to the variable {|x|}:
+
+| gap> Open(handle);
+| gap> GetHandleObj(handle);
+| 42
+| gap> x := 51;;
+| gap> GetHandleObj(handle);
+| 42
+| gap> SetByHandle(handle, 20);
+| gap> GetHandleObj(handle);
+| 20
+
+===| GetHandleAccessType(handle)
+
+{|GetHandleAccessType|} returns the access type of a handle.
+
+===| Open(handle)
+
+Each thread that wants to use a handle in any way needs to explicitly
+open it. This is for the purpose of explicit reference counting, so
+that the handles that are not used by any thread can be garbage
+collected. {|Open|} opens a handle in the thread that calls it.
+
+===| Close(handle)
+
+{|Close|} closes a handle in the thread that calls it, decreasing
+reference count for that handle in turn. All subsequent
+operations on that handle in the thread that called {|Close|} result
+in an error, unless the handle is open again.
+
+===| Destory(handle)
+
+{|Destroy|} destroyes a handle on the node that calls it, meaning that
+all subsequent operations on that handle on that node result
+in an error, and that the handle cannot be reopened. This also makes
+the object to which the handle points to available for garbage
+collection on that node. Note that the same handle (with the
+accompanying object) can still exist on other nodes.
+
+The handle is destroyed only if it is safe, i.e. if all of the threads
+on the node that calls {|Destroy|} have closed the handle and, in the
+case the handle is read-write and it holds the actual object, all
+nodes that the handle was sent to also destroyed their copies of it.
+
+===| GetHandeObj(handle)
+
+{|GetHandleObj|} returns the object that a handle points to.
+If the object that a handle points to is on some remote node, the call
+will block until the object is fetched.
+
+| gap> handle := CreateHandleFromObj ( [1,2,3,4,5] );;
+| gap> Open(handle);
+| gap> GetHandleFromObj(handle);
+| [1,2,3,4,5]
+
+===| SendHandle(handle, node)
+
+{|SendHandle|} sends handle {|handle|} to a destination MPI node
+{|node|}. Note that only the handle itself (and not the object it
+points to) is sent. 
+
+===| RemoteCopyObj(handle, node)
+
+{|RemoteCopyObj|} copies the object that {|handle|} points to to the
+{|node|} MPI node. {|handle|} must have read-write or volatile access
+type. Note that the handle may or may not exists on the destination
+node. If it does exist, the object it points to on the receiving node
+(if any) is overwritten by the object that is sent. If the handle does
+not exist, it is first sent to the receiving node. Therefore, the
+following two pieces of code produce the same result:
+
+| gap> handle := CreateHandleFromObj ([1,2,3,4,5]);
+| gap> RemoteCopyObj (handle, 1);
+
+| gap> handle := CreateHandleFromObj ([1,2,3,4,5]);
+| gap> SendHandle (handle, 1);
+| gap> RemoteCopyObj (handle, 1);
+
+===| RemotePushObj(handle, node)
+
+{|RemotePushObj|} migrates the object that {|handle|} points to to the
+{|node|} MPI node. It can be called for all types of handles
+(read-only, read-write and volatile). Note that the handle may or may not exists on the destination
+node. If it does exist, the object it points to on the receiving node
+(if any) is overwritten by the object that is sent. If the handle does
+not exist, it is first sent to the receiving node. Therefore, the
+following two pieces of code produce the same result:
+
+| gap> handle := CreateHandleFromObj ([1,2,3,4,5]);
+| gap> RemotePushObj (handle, 1);
+
+| gap> handle := CreateHandleFromObj ([1,2,3,4,5]);
+| gap> SendHandle (handle, 1);
+| gap> RemotePushObj (handle, 1);
+
+===| RemotePullObj(handle)
+
+{|RemotePullObj|} fetches the object that {|handle|} points to and
+stores it on the node that called the function. The object is deleted
+from the node that owns it. This operation can be called for all types
+of handles.
+
+The following piece of code creates a handle for a list, pushes the
+list to the node 1 and then fetches it back, deleting it from node 1.
+
+| gap> handle := CreateHandleFromObj ([1,2,3,4,5]);
+| gap> RemotePushObj (handle, 1);
+| gap> RemotePullObj (handle);
+
+===| RemoteCloneObj(handle)
+
+{|RemotePullObj|} fetches the object that {|handle|} points to and
+stores it on the node that called the function. The object also
+remains on the node which originally owned it. 
+This operation can be called for read-only and volatile handles.
+
+The following piece of code creates a handle for a list, pushes the
+list to the node 1 and then fetches it back, while still retaining its
+copy on node 1.
+
+| gap> handle := CreateHandleFromObj ([1,2,3,4,5]);
+| gap> RemotePushObj (handle, 1);
+| gap> RemoteCloneObj (handle);
+
+

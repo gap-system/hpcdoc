@@ -1,0 +1,22 @@
+= MPIGAP Overview
+
+MPIGAP is the library for GAP which supports distributed-memory
+systems. It is based on MPI communication library, and in its base is
+the ParGAP package. MPIGAP and supports distributed-memory programming
+on different levels, from low-level MPI bindings, to the high-level
+operations with implicit task management and load-balancing.
+
+To install MPIGAP, checkout the latest hpcgap repository and then from
+the GAP root directory do
+
+| ./make.hpc mpi
+
+This requires you to have a working MPI library implementation (such
+as MPICH or OpenMPI), and MPIHOME shell variable set to the root dir
+of this implementation. 
+Once MPIGAP is build, you can run it with
+
+| mpiexec -n <noProcesses> bin/<arch>/gap
+
+
+

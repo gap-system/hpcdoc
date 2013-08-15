@@ -1,0 +1,14 @@
+= Distributed Tasks
+
+==| SendTask(t,node)
+{|SendTask(t,node)|} sends the task for the execution on MPI node
+{|node|}. Task arguments are copied to the destination node. If
+argument to the task is handle, only the handle (and not the object it
+points to) is copied. On the destination node, the object needs to be
+fetched (via {|RemotePullObj|} or {|RemoteCloneObj|}), or,
+alternatively, it needs to be explicitly pushed from the node calling
+{|SendTask|} via {|RemoteCopyObj|} or {|RemotePushObj|}.
+
+
+
+MPIGAP supports 
