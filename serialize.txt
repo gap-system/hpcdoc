@@ -1,0 +1,95 @@
+= Serialization support
+
+HPC-GAP has support to serialize most GAP data. While functions in
+particular cannot be serialized, it is possible to serialize all
+primitive types (booleans, integers, cyclotomics, permutations, floats,
+etc.) as well as all lists and records.
+
+Custom serialization support can be written for data objects, positional
+objects, and component objects; serialization of compressed vectors is
+already supported by the standard library.
+
+==| SerializeToNativeString(obj)
+
+{|SerializeToNativeString|} takes the object passed as an argument and
+turns it into a string, from which a copy of the original can be extracted
+using {|DeserializeNativeString|}.
+
+==| DeserializeNativeString(str)
+
+{|DeserializeNativeString|} reverts the serialization process.
+
+Example:
+
+| gap> DeserializeNativeString(SerializeToNativeString([1,2,3]));
+| [ 1, 2, 3 ]
+
+==| InstallTypeSerializationTag(type, tag)
+
+{|InstallTypeSerializationTag|} allows the serialization of data objects,
+positional objects, and component objects. The value of {-tag-} must be
+unique for each type; it can be a string or integer. Non-negative integers
+are reserved for use by the standard library; users should use negative
+integers or strings instead.
+
+Objects of such a type are serialized in a straightforward way: During
+serialization, data objects are converted into a byte stream, positional
+objects into lists, and component objects into records. They are then
+serialized along with their lists; deserialization uses the type
+corresponding to the tag in conjunction with {|Objectify|} to
+reconstruct a copy of the original object.
+
+Note that this functionality may be inadequate for objects that have
+complex data structures attached that are not mean to be replicated.
+The following alternative is meant for such objects.
+
+==| InstallSerializer(description, filters, method)
+
+The more general {|InstallSerializer|} allows for arbitarily complex
+serialization code. It installs {-method-} as the method to serialize
+objects matching {-filters-}; {-description-} has the same role as for
+{|InstallMethod|}.
+
+The method must return a plain list matching a specific format. The
+first element must be a non-negative integer, the second must be a
+string descriptor that is unique to the serializer; these can then
+be followed by an arbitrary number of arguments.
+
+As many of the arguments as specified by the first element of the list
+will be converted from their object representation into a plain
+representation. Data objects will be converted into untyped data objects,
+positional objects will be converted into plain lists, and component
+objects into records. The remaining arguments will remain untouched.
+
+Upon deserialization, these arguments will be passed to a function
+specified by the second element of the list.
+
+Example:
+
+| InstallSerializer("8-bit vectors", [ Is8BitVectorRep ], function(obj)
+|   return [1, "Vec8Bit", obj, Q_VEC8BIT(obj), IS_MUTABLE_OBJ(obj)];
+| end);
+
+Here, {|obj|} will be converted into its underlying representation,
+while the remaining arguments are left alone. {|"Vec8Bit"|} is the
+name that is used to look up the deserializer function.
+
+== InstallDeserializer(descriptor, func)
+
+The {-descriptor-} value must be the same as the second element of
+the list returned by the serializer; {-func-} must be a function
+that takes as many arguments as there were arguments after the second
+element of that list. For deserialization, this function is invoked
+and needs to return the deserialized object constructed from the
+arguments.
+
+Example:
+
+| InstallDeserializer("Vec8Bit", function(obj, q, mut)
+|   SET_TYPE_OBJ(obj, TYPE_VEC8BIT(q, mut));
+|   return obj;
+| end);
+
+Here, the untyped {|obj|} that was passed to the deserializer needs
+to be given the correct type, which is calculated from {|q|} and
+{|mut|}.

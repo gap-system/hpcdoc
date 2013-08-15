@@ -1,4 +1,4 @@
-SRC=preamble.txt tasks.txt vars.txt regions.txt ui.txt aobjects.txt threads.txt channels.txt semaphores.txt syncvars.txt zmq.txt zgap.txt lowlevel.txt
+SRC=preamble.txt tasks.txt vars.txt regions.txt ui.txt aobjects.txt threads.txt channels.txt semaphores.txt syncvars.txt serialize.txt zmq.txt zgap.txt lowlevel.txt
 MPI_SRC=mpi-lowlevel.txt
 DENOTE=bin/denote
 
