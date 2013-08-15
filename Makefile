@@ -4,7 +4,7 @@ DENOTE=bin/denote
 
 all: html
 
-html: $(SRC) $(MPI_SRC)
+html hpcdoc.html mpigapdoc.html: $(SRC) $(MPI_SRC)
 	$(DENOTE) -html $(SRC) > hpcdoc.html
 	$(DENOTE) -html $(MPI_SRC) > mpigapdoc.html  
 gapdoc: $(SRC) $(MPI_SRC)
