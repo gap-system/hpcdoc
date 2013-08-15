@@ -79,7 +79,9 @@ HPC-GAP currently has multiple implementations of the task API. To
 enable the reference implementation, set the environment variable
 GAP_STDTASKS to a non-empty value before starting GAP.
 
-==| RunTask(func [, arg1, ..., argn])
+== Running tasks
+
+===| RunTask(func [, arg1, ..., argn])
 
 {|RunTask|} prepares a task for execution and starts it. The task will
 call the function {-func-} with arguments {-arg1-} through {-argn-} (if
@@ -88,11 +90,13 @@ provided). The return value of {-func-} is the result of the task.
 The {|RunTask|} call itself returns a task object that can be used by
 functions that expect a task argument.
 
-==| ScheduleTask(condition, func, [, arg1, ..., argn])
+===| ScheduleTask(condition, func, [, arg1, ..., argn])
 
 {|ScheduleTask|} prepares a task for execution, but, unlike {|RunTask|}
 does not start it until {-condition-} is met. See {^Conditions^} on
-how to construct conditions.
+how to construct conditions. Simple examples of conditions are
+individual tasks (execution occurs after the task completes) or
+lists of tasks (execution occurs after all tasks in the list complete).
 
 | gap> t1 := RunTask(x->x*x, 3);;
 | gap> t2 := RunTask(x->x*x, 4);;
@@ -108,39 +112,39 @@ and {|t2} to complete, the above implementation does not actually
 start the final task until the others are complete, making it more
 efficient, since no additional worker thread needs to be occupied.
 
-==| DelayTask(func [, arg1, ..., argn])
+===| DelayTask(func [, arg1, ..., argn])
 
 {|DelayTask|} works as {^RunTask^}, but its start is delayed until
 it is being waited for (including implicitly by calling {^TaskResult^}).
 
-==| RunAsyncTask(func [, arg1, ..., argn])
+===| RunAsyncTask(func [, arg1, ..., argn])
 
 {|RunAsyncTask|} creates an asynchronous task. It works like {^RunTask^},
 except that its result will be ignored.
 
-==| ScheduleAsyncTask(condition, func, [, arg1, ..., argn])
+===| ScheduleAsyncTask(condition, func, [, arg1, ..., argn])
 
 {|ScheduleAsyncTask|} creates an asynchronous task. It works like
 {^ScheduleTask^}, except that its result will be ignored.
 
-==| MakeTaskAsync(task)
+===| MakeTaskAsync(task)
 
 {|MakeTaskAsync|} turns a synchronous task into an asynchronous task
 that cannot be waited for and whose result will be ignored.
 
-==| ImmediateTask(func [, arg1, ..., argn])
+===| ImmediateTask(func [, arg1, ..., argn])
 
 {|ImmediateTask|} executes the task specified by its arguments
 synchronously, usually within the current thread.
 
-==| ExecuteTask(task)
+===| ExecuteTask(task)
 
 {|ExecuteTask|} starts {-task-} if it is not already running. It has
 only an effect if its argument is a task returned by {^DelayTask^};
 otherwise, it is a no-op.
 
-==| WaitTask(task1, ..., taskn)
-==| WaitTask(condition)
+===| WaitTask(task1, ..., taskn)
+===| WaitTask(condition)
 
 {|WaitTask|} waits until {-task1-} through {-taskn-} have completed;
 after that, it returns.
@@ -149,11 +153,11 @@ Alternatively, a condition can be passed to {|WaitTask|} in order to
 wait until a condition is met. See {^Conditions^} on how to construct
 conditions.
 
-==| WaitTasks(task1, ..., taskn)
+===| WaitTasks(task1, ..., taskn)
 
 {|WaitTasks|} is an alias for {|WaitTask|}.
 
-==| WaitAnyTask(task1, ..., taskn)
+===| WaitAnyTask(task1, ..., taskn)
 
 The {|WaitAnyTask|} function waits for any of its arguments to finish,
 then returns the number of that task.
@@ -174,36 +178,82 @@ One can pass a list of tasks to {|WaitAnyTask|} as an argument;
 {|WaitAnyTask([task1, ..., taskn])|} behaves identically to
 {|WaitAnyTask(task1, ..., taskn)|}.
 
-==| TaskResult(task)
+===| TaskResult(task)
 
 The {|TaskResult|} function returns the result of a task. It implicitly
 does a {|WaitTask(task)|} if that is necessary. Multiple invocations of
 {|TaskResult|} with the same task argument will not do repeated waits
 and always return the same value.
 
-==| RunningTasks()
+===| CurrentTask()
+
+The {|CurrentTask|} returns the currently running task.
+
+===| RunningTasks()
 
 This function returns the number of currently running tasks. Note that
 it is only an approximation and can change as new tasks are being
-started in other threads.
+started by other threads.
 
-==| TaskStarted(task)
+===| TaskStarted(task)
 
 This function returns true if the task has started executing (i.e., for
 any non-delayed task), false otherwise.
 
-==| TaskFinished(task)
+===| TaskFinished(task)
 
 This function returns true if the task has finished executing and its
 result is available, false otherwise.
 
-==| TaskIsAsync(task)
+===| TaskIsAsync(task)
 
 This function returns true if the task is asynchronous, true otherwise.
 
-==| CullIdleTasks()
+===| CullIdleTasks()
 
 This function terminates unused worker threads.
+
+== Cancelling tasks
+
+HPC-GAP uses a cooperative model for task cancellation. A programmer
+can request the cancellation of another task, but it is up to that
+other task to actually terminate itself. The tasks library has functions
+to request cancellation, to test for the cancellation state of a task,
+and to perform actions in response to cancellation requests.
+
+===| CancelTask(task)
+
+{|CancelTask|} submits a request that {-task-} is to be cancelled.
+
+===| TaskCancellationRequested(task)
+
+{|TaskCancellationRequested|} returns true if {|CancelTask|} has been
+called for {-task-}, false otherwise.
+
+===| OnTaskCancellation(exit_func)
+
+{|OnTaskCancellation|} tests if cancellation for the current task
+has been requested. If so, then {-exit_func-} will be called (as a
+parameterless function) and the current task will be aborted. The
+result of the current task will be the value of {|exit_func()|}.
+
+Example:
+
+| gap> task := RunTask(function()
+| >      while true do
+| >        OnTaskCancellation(function() return 314; end);
+| >      od;
+| >    end);
+| gap> CancelTask(task);
+| gap> TaskResult(task);
+| 314
+
+===| OnTaskCancellationReturn(value)
+
+{|OnTaskCancellationReturn|} is a convenience function that does
+the same as:
+
+| OnTaskCancellation(function() return value; end);
 
 == Conditions
 
