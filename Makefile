@@ -4,7 +4,7 @@ DENOTE=bin/denote
 
 all: html
 
-html: $(SRC) $(MPI_SRC)
+html hpcdoc.html: $(SRC) $(MPI_SRC)
 	$(DENOTE) -html $(SRC) > hpcdoc.html
 	$(DENOTE) -html $(MPI_SRC) > mpigapdoc.html  
 gapdoc: $(SRC) $(MPI_SRC)
@@ -15,3 +15,6 @@ wiki:	$(SRC) $(MPI_SRC)
 	$(DENOTE) -wiki $(MPI_SRC) > mpigapdoc.wiki
 cat:	$(SRC)
 	cat $(SRC) >all.txt
+
+pdf: hpcdoc.html template.latex
+	pandoc -o hpcdoc.pdf --template=template.latex -V papersize:a4paper -V geometry:margin=1in -V fontsize:10pt hpcdoc.html
