@@ -135,7 +135,7 @@ class Preamble
       puts "<head><title>#{@@attributes["title"]}</title></head>"
     end
 
-    puts "<body>"
+    puts "<body style='margin:2em;width:40em'>"
 
     if @@attributes["title"] then
       puts "<h1>#{@@attributes["title"]}</h1>"
