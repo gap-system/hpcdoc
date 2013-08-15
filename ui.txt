@@ -1,13 +1,13 @@
-= Text User Interface
+= Console User Interface
 
 HPC-GAP has a multi-threaded user interface to assist with the development
 and debugging of concurrent programs. This user interface is enabled by
 default; to disable it, and use the single-threaded interface, GAP has
 to be started with the {|-S|} option.
 
-== Text UI commands
+== Console UI commands
 
-The shell user interface provides the user with the option to control
+The console user interface provides the user with the option to control
 threads by commands prefixed with an exclamation mark ("!"). Those
 commands are listed below.
 
