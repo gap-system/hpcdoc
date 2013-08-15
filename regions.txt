@@ -319,6 +319,62 @@ The {|LockAndMigrateObj|} function works like {^MigrateObj^}, except that it
 will automatically try to acquire a lock for the region containing {-target-}
 if it does not have one already.
 
+===| IncorporateObj(target, index, value)
+
+The {|IncorporateObj|} function allows convenient migration to a shared
+list or record. If {-target-} is a list, then
+{|IncorporateObj|} is equivalent to:
+
+| IncorporateObj := function(target, index, value)
+|   atomic value do
+|     target[index] := MigrateObj(value, target)
+|   od;
+| end;
+
+If {-target-} is a record, then it is equivalent to:
+
+| IncorporateObj := function(target, index, value)
+|   atomic value do
+|     target.(index) := MigrateObj(value, target)
+|   od;
+| end;
+
+The intended purpose is the population of a shared list or record
+with values after its creation.
+
+Example:
+
+| gap> list := ShareObj([]);
+| gap> atomic list do
+| >      IncorporateObj(list, 1, [1,2,3]);
+| >      IncorporateObj(list, 2, [4,5,6]);
+| >      IncorporateObj(list, 3, [7,8,9]);
+| >    od;
+| gap> ViewShared(list);
+| [ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ]
+
+Using plain assignment would leave the newly created lists in
+the thread-local region.
+
+===| AtomicIncorporateObj(target, index, value)
+
+{|AtomicIncorporateObj|} extends {|IncorporateObj|} by also locking
+the target. I.e., for a list, it is equivalent to:
+
+| AtomicIncorporateObj := function(target, index, value)
+|   atomic value do
+|     target[index] := MigrateObj(value, target)
+|   od;
+| end;
+
+If {-target-} is a record, then it is equivalent to:
+
+| AtomicIncorporateObj := function(target, index, value)
+|   atomic value do
+|     target.(index) := MigrateObj(value, target)
+|   od;
+| end;
+
 ===| AdoptObj(obj)
 
 The {|AdoptObj|} function migrates {-obj-} (and all its subobjects
