@@ -292,15 +292,15 @@ useful in conjunction with the default value for {|NewMilestone|}, e.g.
 | gap> m := NewMilestone();;
 | gap> AchieveMilestone(m);
 
-===| IsAchievedMilestone(milestone)
+===| IsMilestoneAchieved(milestone)
 
-The {|IsAchievedMilestone|} tests explicitly if a milestone has been
+The {|IsMilestoneAchieved|} tests explicitly if a milestone has been
 achieved. It returns {|true|} on success, {|false|} otherwise.
 
 | gap> m := NewMilestone([1,2]);;
 | gap> ContributeToMilestone(m, 1);
-| gap> IsAchievedMilestone(m);
+| gap> IsMilestoneAchieved(m);
 | false
 | gap> ContributeToMilestone(m, 2);
-| gap> IsAchievedMilestone(m);
+| gap> IsMilestoneAchieved(m);
 | true
