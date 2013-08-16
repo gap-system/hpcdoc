@@ -181,7 +181,7 @@ from normal ordering and deadlock checks.
 | gap> RegionOf(1/2);
 | <public region>
 | gap> RegionOf([1,2,3]);
-| <region 0x5e2aa0>
+| <region: thread region #0>
 | gap> RegionOf(ShareObj([1,2,3]));
 | <region 0x45deaa0>
 | gap> RegionOf(ShareObj([1,2,3]));
@@ -590,8 +590,8 @@ object will not be locked.
 
 Example:
 
-| gap> AddAtomic := atomic function(readwrite list, readonly item) do
-| >      Add(l, item);
+| gap> AddAtomic := atomic function(readwrite list, readonly item)
+| >      Add(list, item);
 | >    end;
 
 ==[writeonce] Write-once functionality

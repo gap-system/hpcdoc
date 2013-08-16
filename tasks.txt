@@ -64,7 +64,7 @@ provides the same interface as normal tasks.
 Sometimes it can be useful to ignore the result of a task. The
 {|RunAsyncTask|} provides the necessary functionality.
 
-| gap> RunAsyncTask(function() Print("Hello, world!\n"); end);
+| gap> RunAsyncTask(function() Print("Hello, world!\n"); end);;
 | Hello, world!
 
 Such a task cannot be waited for and its result (if any) is ignored.
@@ -101,8 +101,8 @@ lists of tasks (execution occurs after all tasks in the list complete).
 | gap> t1 := RunTask(x->x*x, 3);;
 | gap> t2 := RunTask(x->x*x, 4);;
 | gap> t := ScheduleTask([t1, t2], function()
-|             return TaskResult(t1) + TaskResult(t2);
-|      end);
+| >           return TaskResult(t1) + TaskResult(t2);
+| >    end);
 | gap> TaskResult(t);
 | 25
 
@@ -167,9 +167,9 @@ then returns the number of that task.
 | gap> which := WaitAnyTask(task1, task2);
 | 2
 | gap> if which = 1 then
-| >      Display(TaskResult(task1);Display(TaskResult(task2);
+| >      Display(TaskResult(task1));Display(TaskResult(task2));
 | >    else
-| >      Display(TaskResult(task2);Display(TaskResult(task1);
+| >      Display(TaskResult(task2));Display(TaskResult(task1));
 | >    fi;
 | [ 4, 5, 6 ]
 | [ 1, 2, 3 ]
