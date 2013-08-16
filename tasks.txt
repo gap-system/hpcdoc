@@ -43,12 +43,12 @@ its result is actually needed.
 | gap> TaskResult(task1) * TaskResult(task2) = Factorial(10000);
 | true
 
-Note that {^WaitTask^} is used here to start execution of both task;
+Note that {^WaitTask^} is used here to start execution of both tasks;
 otherwise, {|task2|} would not be started until {|TaskResult(task1)|}
 has been evaluated.
 
 To start execution of a delayed task, you can also use {|ExecuteTask|}.
-This has no effect if a task has already been executing.
+This has no effect if a task has already been running.
 
 For convenience, you can also use {^ImmediateTask^} to execute a task
 synchronously (i.e., the task is started immediately and the call does
