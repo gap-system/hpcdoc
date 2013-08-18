@@ -6,17 +6,30 @@ the ParGAP package. MPIGAP and supports distributed-memory programming
 on different levels, from low-level MPI bindings, to the high-level
 operations with implicit task management and load-balancing.
 
-To install MPIGAP, checkout the latest hpcgap repository and then from
-the GAP root directory do
+Prerequisites for installing MPIGAP are:
+
+1. Working MPI library, with {|mpicc|} compiler, and {|MPIHOME|}
+environment variable set to the root directory of the library
+({|mpicc|} needs to be in {|$(MPIHOME)/bin|}. MPIGAP was tested using
+MPICH 3 MPI library (www.mpich.org), but should work also with
+OpenMPI.
+
+2. GAP IO package, if IO Pickling is used for object marshalling. See
+below
+
+Once the prerequisites are satisfied, you can install MPIGAP by
+checking out the latest hpcgap repository and then, from
+the GAP root directory, doing
 
 | ./make.hpc mpi
 
-This requires you to have a working MPI library implementation (such
-as MPICH or OpenMPI), and MPIHOME shell variable set to the root dir
-of this implementation. 
 Once MPIGAP is build, you can run it with
 
 | mpiexec -n <noProcesses> bin/<arch>/gap
 
+Probably the best way to run MPIGAP programs is in batch mode. To run
+your inputFile.g in this way, do
+
+| mpiexec -n <noProcesses> bin/<arch>/gap inputFile.g
 
 

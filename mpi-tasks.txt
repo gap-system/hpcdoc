@@ -1,4 +1,50 @@
-= Distributed Tasks
+= Distributed Task Management
+
+MPIGAP has distributed implementation of most of the primitves related
+to the task management in shared memory. API for distributed versions
+of these primitives is almost identical to their shared-memory
+version, with the exception of denoting functions if object
+serialisation is used as a method of object marshalling.
+
+
+==| CreateTask(listOfArguments)
+{|CreateTask|} creates a task, using {|listOfArguments|} for task
+function and arguments. The operation returns the created task. 
+The first element of {|listOfArguments|} is
+a function or a function name, and the remaining elements are arguments. {|CreateTask|}
+just creates a task, and does not put it in the task queue nor does it
+execute it. To do this, user needs to call {|ExecuteTask|}.
+
+If the serialisation method is used for object marshalling, then the
+first element of {|listOfArguments|} needs to be a string denoting
+function name, and the function needs to be declared and installed
+using {|DeclareGlobalFunction|} and {|InstallGlobalFunction|}. In the
+case when pickling is used for object marshalling, first element of
+{|listOfArguments|} can also be a function.
+
+==| ExecuteTask(task)
+{|ExecuteTask|} puts {|task|} into the task queue of the node where it
+was created.
+
+If work-stealing is enabled (see
+{|StartStealing|} and {|StopStealing|} below), the task can be stolen
+by a remote node. All of the arguments are copied to the remote
+node. One or more arguments can be global object handles. In this
+case, only the handles (and not the underlying objects) are copied to
+the remote node.
+
+==| RunTask(f,arg1,arg2,...,argN)
+{|RunTask|} creates a task, with the function (or function name,
+depending on the method for marshalling, see {|CreateTask|}) {|f|} and the arguments
+{|arg1|}, {|arg2|}, ..., {|argN|} and puts it in the task queue of the
+node where it is created. 
+
+If work-stealing is enabled (see
+{|StartStealing|} and {|StopStealing|} below), the task can be stolen
+by a remote node. All of the arguments are copied to the remote
+node. One or more arguments can be global object handles. In this
+case, only the handles (and not the underlying objects) are copied to
+the remote node.
 
 ==| SendTask(t,node)
 {|SendTask(t,node)|} sends the task for the execution on MPI node
@@ -9,6 +55,14 @@ fetched (via {|RemotePullObj|} or {|RemoteCloneObj|}), or,
 alternatively, it needs to be explicitly pushed from the node calling
 {|SendTask|} via {|RemoteCopyObj|} or {|RemotePushObj|}.
 
+==| StartStealing()
+{|StartStealing|} enables work-stealing (disabled by default). Once
+the work-stealing is enabled, the nodes can steal tasks from each
+others' task queues. If work-stealing is disabled, the only way of transfering tasks
+between different nodes is using {|SendTask|} operation.
 
+==| StopStealing()
+{|StopStealing|} disabless work-stealing (this is the default option).
+Once the work-stealing is disabled, the only way of transfering tasks
+between different nodes is using {|SendTask|} operation.
 
-MPIGAP supports 

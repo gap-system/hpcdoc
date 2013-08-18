@@ -1,5 +1,5 @@
 SRC=preamble.txt tasks.txt vars.txt regions.txt ui.txt aobjects.txt threads.txt channels.txt semaphores.txt syncvars.txt serialize.txt zmq.txt zgap.txt lowlevel.txt
-MPI_SRC=mpi-overview.txt mpi-handles.txt mpi-lowlevel.txt
+MPI_SRC=mpi-overview.txt mpi-marshalling.txt mpi-tasks.txt mpi-handles.txt mpi-lowlevel.txt
 DENOTE=bin/denote
 
 all: html
