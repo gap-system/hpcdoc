@@ -18,3 +18,5 @@ cat:	$(SRC)
 
 pdf: hpcdoc.html template.latex
 	pandoc -o hpcdoc.pdf --template=template.latex -V papersize:a4paper -V geometry:margin=1in -V fontsize:10pt hpcdoc.html
+	pandoc -o mpigapdoc.pdf --template=template.latex -V papersize:a4paper -V geometry:margin=1in -V fontsize:10pt mpigapdoc.html
+
