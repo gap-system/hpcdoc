@@ -1,0 +1,37 @@
+= Object Marshalling
+
+In MPIGAP, it is necessary to have a mechanism for transferring
+objects between different MPI nodes. This requires functions to
+convert a GAP object into its binary or string representation, and to
+convert this representation into a GAP object. This is called object
+marshalling. Currently, MPIGAP supports two mechanisms for object
+marshalling: 
+
+1. Object serialisation via {|SerializeToNativeString|} and
+{|DeserializeNativeString|}. This method of marshalling is much faster of
+the two, but also has some drawbacks. It is not portable, and
+therefore cannot be used when MPI nodes have different
+architecture. Also, the range of object that can be marshalled in this
+way is smaller than with IO Pickling. For example, functions cannot be
+marshalled in this way.
+
+2. IO pickling via {|IO_Pickle|} and {|IO_Unpickle|}. This marshalling
+method requires {|IO|} package to be installed. Compared to object
+serialization, marshalling object using this method is much slower, up
+to the point where its performance becomes unacceptable for larger
+objects (e.g. large matrices). However, it is portable and many more
+objects (including functions) have pickling methods implemented.
+
+The default marshalling method is object serialization. User can
+change the method used by setting the {|MPIGAP_MARSHALLING|} variable
+to {|"Serialize"|} or {|"Pickle"|} in her init file.
+
+Most of the time, object marshalling is hidden from the user. The user
+needs to worry about it only if in her application, some "unusual"
+objects need to be transferred between nodes, and no serialization
+method for these objects is written, or if executing GAP in a
+distributed systems where different nodes have different
+architecture. Also, user needs to use explicit marshalling when
+programming using low-level MPI bindings (see below). For vast
+majority of cases, the default marshalling option works and gives very
+good performance.
