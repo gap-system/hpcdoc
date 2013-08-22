@@ -129,7 +129,7 @@ cannot be displayed by {|PrintObj|} or {|ViewObj|}, the functions
 
 == Functions relating to regions
 
-===| NewRegion([name])
+===| NewRegion(name|prec|name,prec)
 
 The function {|NewRegion|} creates a new shared region. If the optional
 argument {-name-} is provided, then the name of the new region will be
@@ -139,23 +139,26 @@ set to {-name-}.
 | <region: example region>
 
 {|NewRegion|} will create a region with a high precedence level. It
-is intended to be called by user code.
+is intended to be called by user code. The exact precedence level
+can be adjusted with {-prec-}, which must be an integer in the
+range {|[-1000..1000]|}; {-prec-} will be added to the normal
+precedence level.
 
-===| NewLibraryRegion([name])
+===| NewLibraryRegion(name|prec|name,prec)
 
 {|NewLibraryRegion|} functions like {|NewRegion|}, except that
 the precedence of the region it creates is below that of
 {|NewRegion|}. It is intended to be used by user libraries and GAP
 packages.
 
-===| NewSystemRegion([name])
+===| NewSystemRegion(name|prec|name,prec)
 
 {|NewSystemRegion|} functions like {|NewRegion|}, except that
 the precedence of the region it creates is below that of
 {|NewLibraryRegion|}. It is intended to be used by the standard GAP
 library.
 
-===| NewKernelRegion([name])
+===| NewKernelRegion(name|prec|name,prec)
 
 {|NewKernelRegion|} functions like {|NewRegion|}, except that
 the precedence of the region it creates is below that of
@@ -168,7 +171,7 @@ and GAP library code that interacts closely with the kernel.
 that the precedence of the region it creates is the lowest available. It
 is intended to be used for regions that are self-contained; i.e. no
 function that uses such a region may lock another region while accessing
-it.
+it. The precedence level of an internal region cannot be adjusted.
 
 ===| NewSpecialRegion([name])
 
@@ -200,7 +203,19 @@ Region objects returned by {|RegionOf|} can be compared:
 The result in this example is true because both lists are in the same
 thread-local region.
 
-===| ShareObj(obj[, name])
+===| RegionPrecedence(obj)
+
+{|RegionPrecedence|} will return the precedence of the region of
+{-obj-}.
+
+| gap> RegionPrecedence(NewRegion("Test"));
+| 30000
+| gap> RegionPrecedence(NewRegion("Test2", 1));
+| 30001
+| gap> RegionPrecedence(NewLibraryRegion("LibTest", -1));
+| 19999
+
+===| ShareObj(obj[, name|, prec|, name, prec])
 
 The {|ShareObj|} function creates a new shared region and migrates
 the object and all its subobjects to that region. If the optional
@@ -208,22 +223,24 @@ argument {-name-} is provided, then the name of the new region is
 set to {-name-}.
 
 {|ShareObj|} will create a region with a high precedence level. It
-is intended to be called by user code.
+is intended to be called by user code. The actual precedence level
+can be adjusted by the optional {-prec-} argument in the same way
+as for {|NewRegion|}.
 
-===| ShareLibraryObj(obj[, name])
+===| ShareLibraryObj(obj[, name|, prec|, name, prec])
 
 {|ShareLibraryObj|} functions like {|ShareObj|}, except that the
 precedence of the region it creates is below that of {|ShareObj|}. It is
 intended to be used by user libraries and GAP packages.
 
-===| ShareSystemObj(obj[, name])
+===| ShareSystemObj(obj[, name|, prec|, name, prec])
 
 {|ShareSystemObj|} functions like {|ShareObj|}, except that the
 precedence of the region it creates is below that of
 {|ShareLibraryObj|}. It is intended to be used by the standard GAP
 library.
 
-===| ShareKernelObj(obj[, name])
+===| ShareKernelObj(obj[, name|, prec|, name, prec])
 
 {|ShareKernelObj|} functions like {|ShareObj|}, except that the
 precedence of the region it creates is below that of {|ShareSystemObj|}.
@@ -244,7 +261,7 @@ it.
 precedence of the region it creates is negative. It is thus exempt
 from normal ordering and deadlock checks.
 
-===| ShareSingleObj(obj[, name])
+===| ShareSingleObj(obj[, name|, prec|, name, prec])
 
 The {|ShareSingleObj|} function creates a new shared region and migrates
 the object, but not its subobjects, to that region. If the optional
@@ -259,23 +276,25 @@ argument {-name-} is provided, then the name of the new region is set to
 | [ true, false, false ]
 
 {|ShareSingleObj|} will create a region with a high precedence level. It
-is intended to be called by user code.
+is intended to be called by user code. The actual precedence level
+can be adjusted by the optional {-prec-} argument in the same way
+as for {|NewRegion|}.
 
-===| ShareSingleLibraryObj(obj[, name])
+===| ShareSingleLibraryObj(obj[, name|, prec|, name, prec])
 
 {|ShareSingleLibraryObj|} functions like {|ShareSingleObj|}, except that
 the precedence of the region it creates is below that of
 {|ShareSingleObj|}. It is intended to be used by user libraries and GAP
 packages.
 
-===| ShareSingleSystemObj(obj[, name])
+===| ShareSingleSystemObj(obj[, name|, prec|, name, prec])
 
 {|ShareSingleSystemObj|} functions like {|ShareSingleObj|}, except that
 the precedence of the region it creates is below that of
 {|ShareSingleLibraryObj|}. It is intended to be used by the standard GAP
 library.
 
-===| ShareSingleKernelObj(obj[, name])
+===| ShareSingleKernelObj(obj[, name|, prec|, name, prec])
 
 {|ShareSingleKernelObj|} functions like {|ShareSingleObj|}, except that
 the precedence of the region it creates is below that of
