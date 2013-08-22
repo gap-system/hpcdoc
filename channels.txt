@@ -197,3 +197,37 @@ the object has been retrieved.
 | gap> ReceiveAnyChannelWithIndex(ch1, ch2);
 | [ [ 1, 2, 3 ], 2 ]
 
+
+==| TallyChannel(channel)
+
+{|TallyChannel|} returns the number of objects that a channel contains.
+This number can increase or decrease, as data is sent to or received
+from this channel. Send operations will only ever increase and receive
+operations will only ever decrease this count. Thus, if there is only
+one thread receiving data from the channel, it can use the result as
+a lower bound for the number of elements that will be available in the
+channel.
+
+| gap> ch := CreateChannel();;
+| gap> SendChannel(ch, 2);
+| gap> SendChannel(ch, 3);
+| gap> SendChannel(ch, 5);
+| gap> TallyChannel(ch);
+| 3
+
+==| InspectChannel(channel)
+
+{|InspectChannel|} returns a list of the objects that a channel
+contains. Note that objects that are not in the shared, public, or
+read-only region will be temporarily stored in the so-called limbo
+region while in transit and will be inaccessible through normal means
+until they have been received.
+
+| gap> ch := CreateChannel();;
+| gap> SendChannel(ch, 2);
+| gap> SendChannel(ch, 3);
+| gap> SendChannel(ch, 5);
+| gap> InspectChannel(ch);
+| [ 2, 3, 5 ]
+
+This function is primarly intended for debugging purposes.
