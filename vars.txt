@@ -1,6 +1,8 @@
 = Variables in HPC-GAP
 
-Variables with global scope are treated specifically in HPC-GAP.
+Variables with global scope have revised semantics in HPC-GAP in
+order to address concurrency issues. The normal semantics of global
+variables that are only accessed by a single thread remain unaltered.
 
 == Global variables
 
@@ -15,7 +17,7 @@ to predict with certainty which specific one will be assigned.
 
 HPC-GAP supports the notion of thread-local variables.
 Thread-local variables are (after being declared as such)
-accessed and modified like thread-local variables. However, unlike
+accessed and modified like global variables. However, unlike
 global variables, each thread can assign a distinct value to a thread-local
 variable.
 
