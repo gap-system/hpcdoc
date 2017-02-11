@@ -1,7 +1,7 @@
 # /!\ WARNING! /!\
 This documentation has been converted to GAPDoc format and integrated into the
 [HPC-GAP branch](https://github.com/gap-system/gap/tree/hpcgap-default) of GAP.
-Please submit updates to the documentation there.
+Please submit updates to the documentation in the folder `gap/doc/hpc`.
 
 # HPC-GAP Documentation
 
